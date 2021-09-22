@@ -124,4 +124,45 @@ class RestaurantsListController {
   void goToRoles() {
     Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
   }
+
+
+  restaurantDistance(_distanceRC) {
+    if (_distanceRC / 1000 <= 2) {
+      return Text('0.99');
+    } else if ((_distanceRC / 1000 > 2) && (_distanceRC / 1000 <= 3)) {
+      return Text('1.25');
+    } else if ((_distanceRC / 1000 > 3) && (_distanceRC / 1000 <= 4)) {
+      return Text('1.49');
+    } else if ((_distanceRC / 1000 > 4) && (_distanceRC / 1000 <= 5)) {
+      return Text('1.75');
+    } else if ((_distanceRC / 1000 > 5) && (_distanceRC / 1000 <= 6)) {
+      return Text('1.99');
+    } else if ((_distanceRC / 1000 > 6) && (_distanceRC / 1000 <= 7)) {
+      return Text('2.25');
+    } else if ((_distanceRC / 1000 > 7) && (_distanceRC / 1000 <= 8)) {
+      return Text('2.49');
+    } else if ((_distanceRC / 1000 > 8) && (_distanceRC / 1000 <= 9)) {
+      return Text('2.75');
+    } else if ((_distanceRC / 1000 > 9) && (_distanceRC / 1000 <= 10)) {
+      return Text('2.99');
+    } else if ((_distanceRC / 1000 > 10) && (_distanceRC / 1000 <= 11)) {
+      return Text('3.49');
+    } else if ((_distanceRC / 1000 > 11) && (_distanceRC / 1000 <= 12)) {
+      return Text('3.75');
+    } else if ((_distanceRC / 1000 > 12 && (_distanceRC / 1000 <= 13))) {
+      return Text('3.99');
+    } else if ((_distanceRC / 1000 > 13) && (_distanceRC / 1000 <= 14)) {
+      return Text('4.25');
+    } else if ((_distanceRC / 1000 > 14) && (_distanceRC / 1000 <= 15)) {
+      return Text('4.49');
+    } else if ((_distanceRC / 1000 > 15) && (_distanceRC / 1000 <= 16)) {
+      return Text('4.75');
+    } else if ((_distanceRC / 1000 > 16) && (_distanceRC / 1000 <= 17)) {
+      return Text('4.99');
+    } else {
+      return Icon(Icons.credit_card);
+    }
+  }
+
+
 }

@@ -17,6 +17,7 @@ class Product {
   List<Product> toList = [];
   double lat;
   double lng;
+  dynamic features;
 
   Product(
       {this.id,
@@ -29,39 +30,40 @@ class Product {
       this.idCategory,
       this.quantity,
       this.lat,
-      this.lng});
+      this.lng,
+      this.features});
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
-        id: json["id"] is int ? json["id"].toString() : json['id'],
-        name: json["name"],
-        description: json["description"],
-        image1: json["image1"],
-        image2: json["image2"],
-        image3: json["image3"],
-        price: json['price'] is String
-            ? double.parse(json["price"])
-            : isInteger(json["price"])
-                ? json["price"].toDouble()
-                : json['price'],
-        idCategory: json["id_category"] is String
-            ? int.parse(json["id_category"])
-            : json["id_category"],
-        quantity: json["quantity"],
-        lat: json['lat'] != null
-            ? (json['lat'] is String
-                ? double.parse(json["lat"])
-                : isInteger(json["lat"])
-                    ? json["lat"].toDouble()
-                    : json['lat'])
-            : 0.0,
-        lng: json['lng'] != null
-            ? (json['lng'] is String
-                ? double.parse(json["lng"])
-                : isInteger(json["lng"])
-                    ? json["lng"].toDouble()
-                    : json['lng'])
-            : 0.0,
-      );
+      id: json["id"] is int ? json["id"].toString() : json['id'],
+      name: json["name"],
+      description: json["description"],
+      image1: json["image1"],
+      image2: json["image2"],
+      image3: json["image3"],
+      price: json['price'] is String
+          ? double.parse(json["price"])
+          : isInteger(json["price"])
+              ? json["price"].toDouble()
+              : json['price'],
+      idCategory: json["id_category"] is String
+          ? int.parse(json["id_category"])
+          : json["id_category"],
+      quantity: json["quantity"],
+      lat: json['lat'] != null
+          ? (json['lat'] is String
+              ? double.parse(json["lat"])
+              : isInteger(json["lat"])
+                  ? json["lat"].toDouble()
+                  : json['lat'])
+          : 0.0,
+      lng: json['lng'] != null
+          ? (json['lng'] is String
+              ? double.parse(json["lng"])
+              : isInteger(json["lng"])
+                  ? json["lng"].toDouble()
+                  : json['lng'])
+          : 0.0,
+      features: json['features']);
 
   Product.fromJsonList(List<dynamic> jsonList) {
     if (jsonList == null) return;
@@ -82,7 +84,8 @@ class Product {
         "id_category": idCategory,
         "quantity": quantity,
         "lat": lat,
-        "lng": lng
+        "lng": lng,
+        "features": features
       };
 
   static bool isInteger(num value) =>

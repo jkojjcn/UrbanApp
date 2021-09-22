@@ -68,7 +68,6 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
       margin: EdgeInsets.only(left: 30, right: 30, top: 1, bottom: 10),
       child: ElevatedButton(
         onPressed: () {
-          
           _conO.createOrder(widget.restaurant.id);
           // _con.goToAddress(widget.restaurant);
         },
@@ -164,7 +163,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 style: TextStyle(fontSize: 15),
               ),
               Text(
-                '${_con.total}\$',
+                '${_con.total.toStringAsFixed(2)}\$',
                 style: TextStyle(fontSize: 15),
               ),
             ],
@@ -177,7 +176,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 style: TextStyle(fontSize: 15),
               ),
               Text(
-                '${_con.total}\$',
+                '${_con.total.toStringAsFixed(2)}\$',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
             ],

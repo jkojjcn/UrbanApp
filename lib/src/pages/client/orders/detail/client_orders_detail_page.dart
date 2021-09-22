@@ -65,7 +65,7 @@ class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
               _textData(
                   'Entregar en:', '${_con.order?.address?.address ?? ''}'),
               _textData('Fecha de pedido:',
-                  '${RelativeTimeUtil.getRelativeTime(_con.order.timestamp ?? 0)}'),
+                  '${RelativeTimeUtil.getRelativeTime(_con.order?.timestamp ?? 0)}'),
               _con.order?.status == 'EN CAMINO' ? _buttonNext() : Container()
             ],
           ),

@@ -22,8 +22,6 @@ class ClientProductsListController {
   CategoriesProvider _categoriesProvider = new CategoriesProvider();
   ProductsProvider _productsProvider = new ProductsProvider();
   List<Category> categories = [];
-  StreamController<String> streamController = StreamController();
-  TextEditingController _searchController = new TextEditingController();
 
   Timer searchOnStoppedTyping;
 
@@ -78,6 +76,8 @@ class ClientProductsListController {
 
   void openBottomSheet(Product product) {
     showMaterialModalBottomSheet(
+        enableDrag: false,
+        isDismissible: false,
         context: context,
         builder: (context) => ClientProductsDetailPage(product: product));
   }

@@ -108,6 +108,20 @@ flutter:
       fonts:
         - asset: assets/fonts/NimbusSans/NimbusSanL-Reg.otf
 
+    - family: MontserratMedium
+      fonts:
+        - asset: assets/fonts/Montserrat/Medium.ttf
+        
+    - family: MontserratRegular
+      fonts:
+        - asset: assets/fonts/Montserrat/Regular.ttf
+    - family: MontserratSemiBold
+      fonts:
+        - asset: assets/fonts/Montserrat/SemiBold.ttf
+    - family: MontserratSemiBoldItalic
+      fonts:
+        - asset: assets/fonts/Montserrat/SemiBoldItalic.ttf
+
     - family: Roboto
       fonts:
         - asset: assets/fonts/Roboto/Roboto-Medium.ttf  

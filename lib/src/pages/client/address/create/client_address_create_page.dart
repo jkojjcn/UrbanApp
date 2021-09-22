@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/pages/client/address/create/client_address_create_controller.dart';
@@ -28,16 +29,52 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nueva direccion'),
+        title: FadeIn(
+          child: Text(
+            'Crear dirección',
+            style: TextStyle(fontSize: 15),
+          ),
+        ),
+        leading: FadeIn(
+          child: Positioned(
+              left: 5,
+              top: 30,
+              child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                }, //_con.close,
+                icon: Container(
+                  height: 30,
+                  width: 30,
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      color: Colors.black,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              )),
+        ),
       ),
-      bottomNavigationBar: _buttonAccept(),
-      body: Column(
-        children: [
-          _textCompleteData(),
-          _textFieldAddress(),
-          _textFieldNeighborhood(),
-          _textFieldRefPoint()
-        ],
+      bottomNavigationBar:
+          FadeIn(duration: Duration(milliseconds: 500), child: _buttonAccept()),
+      body: SingleChildScrollView(
+        child: FadeIn(
+          duration: Duration(milliseconds: 700),
+          child: Column(
+            children: [
+              _textCompleteData(),
+              _textFieldAddress(),
+              _textFieldNeighborhood(),
+              _textFieldRefPoint()
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -48,7 +85,8 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
       child: TextField(
         controller: _con.addressController,
         decoration: InputDecoration(
-            labelText: 'Direccion',
+            hintText: 'Casita, trabajo, etc',
+            labelText: 'Nombre de la ubicación',
             suffixIcon: Icon(
               Icons.location_on,
               color: MyColors.primaryColor,
@@ -81,7 +119,8 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
       child: TextField(
         controller: _con.neighborhoodController,
         decoration: InputDecoration(
-            labelText: 'Barrio',
+          hintText: '',
+            labelText: 'Barrio, sector o ciudadela',
             suffixIcon: Icon(
               Icons.location_city,
               color: MyColors.primaryColor,
@@ -93,10 +132,10 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
   Widget _textCompleteData() {
     return Container(
       alignment: Alignment.centerLeft,
-      margin: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+      margin: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
       child: Text(
-        'Completa estos datos',
-        style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+        'Lugar de entrega',
+        style: TextStyle(fontSize: 19, fontWeight: FontWeight.normal),
       ),
     );
   }

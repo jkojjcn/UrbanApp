@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/address.dart';
@@ -31,12 +32,15 @@ class _ClientAddressListPageState extends State<ClientAddressListPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Direcciones'),
-        actions: [_iconAdd()],
+        actions: [FadeIn(child: _iconAdd())],
       ),
       body: Stack(
         children: [
-          Positioned(top: 0, child: _textSelectAddress()),
-          Container(margin: EdgeInsets.only(top: 50), child: _listAddress())
+          Positioned(top: 0, child: FadeIn(child: _textSelectAddress())),
+          Container(
+              margin: EdgeInsets.only(top: 50),
+              child: FadeIn(
+                  duration: Duration(milliseconds: 700), child: _listAddress()))
         ],
       ),
       bottomNavigationBar: _buttonAccept(),
@@ -74,7 +78,7 @@ class _ClientAddressListPageState extends State<ClientAddressListPage> {
       child: ElevatedButton(
         onPressed: () {
           Navigator.pushNamed(context, 'client/restaurants');
-           _con.createOrder(widget.restaurant.id);
+          //  _con.createOrder(widget.restaurant?.id ?? "");
         },
         child: Text('Confirmar'),
         style: ElevatedButton.styleFrom(
@@ -91,17 +95,23 @@ class _ClientAddressListPageState extends State<ClientAddressListPage> {
         builder: (context, AsyncSnapshot<List<Address>> snapshot) {
           if (snapshot.hasData) {
             if (snapshot.data.length > 0) {
-              return ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                  itemCount: snapshot.data?.length ?? 0,
-                  itemBuilder: (_, index) {
-                    return _radioSelectorAddress(snapshot.data[index], index);
-                  });
+              return FadeIn(
+                duration: Duration(seconds: 1),
+                child: ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                    itemCount: snapshot.data?.length ?? 0,
+                    itemBuilder: (_, index) {
+                      return _radioSelectorAddress(snapshot.data[index], index);
+                    }),
+              );
             } else {
-              return _noAddress();
+              return FadeIn(
+                  duration: Duration(seconds: 1), child: _noAddress());
             }
           } else {
-            return _noAddress();
+            return Container();
+            // FadeIn(duration: Duration(seconds: 3), child: _noAddress()
+
           }
         });
   }

@@ -37,7 +37,7 @@ class RegisterController {
   }
 
   void register() async {
-    String email = emailController.text.trim();
+    String email = emailController.text.toLowerCase().trim();
     String name = nameController.text;
     String lastname = lastnameController.text;
     String phone = phoneController.text.trim();

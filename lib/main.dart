@@ -98,7 +98,7 @@ class _MyAppState extends State<MyApp> {
             DeliveryOrdersMapPage(),
       },
       theme: ThemeData(
-          // fontFamily: 'NimbusSans',
+          fontFamily: 'MontserratRegular',
           primaryColor: MyColors.primaryColor,
           appBarTheme: AppBarTheme(elevation: 0)),
     );
