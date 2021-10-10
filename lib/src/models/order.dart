@@ -22,7 +22,10 @@ class Order {
   User client;
   User delivery;
   Address address;
-  String restaurant_id;
+  String restaurantId;
+  String features;
+  Product restaurant;
+  double distance;
 
   Order(
       {this.id,
@@ -37,7 +40,10 @@ class Order {
       this.client,
       this.delivery,
       this.address,
-      this.restaurant_id});
+      this.restaurantId,
+      this.features,
+      this.restaurant,
+      this.distance});
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json["id"] is int ? json["id"].toString() : json['id'],
@@ -70,7 +76,16 @@ class Order {
             : json['address'] is Address
                 ? json['address']
                 : Address.fromJson(json['address'] ?? {}),
-        restaurant_id: json["restaurant_id"],
+        restaurantId: json["restaurant_id"],
+        features: json["features"] ?? '',
+        restaurant: json["restaurant"] is String
+            ? productFromJson(json['restaurant'])
+            : json['restaurant'] is Product
+                ? json['restaurant']
+                : Product.fromJson(json['restaurant'] ?? {}),
+        distance: json["distance"] is String
+            ? double.parse(json["distance"])
+            : json["distance"],
       );
 
   Order.fromJsonList(List<dynamic> jsonList) {
@@ -94,6 +109,9 @@ class Order {
         "client": client,
         "delivery": delivery,
         "address": address,
-        "restaurant_id": restaurant_id
+        "restaurant_id": restaurantId,
+        "features": features,
+        "restaurant": restaurant,
+        "distance": distance
       };
 }

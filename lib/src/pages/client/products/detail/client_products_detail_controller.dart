@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jcn_delivery/src/models/features/checkModel.dart';
 import 'package:jcn_delivery/src/models/features/dropModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
@@ -13,9 +12,32 @@ class ClientProductsDetailController {
 
   int counter = 1;
   double productPrice;
+  String sabor;
+  List<String> valores = [];
 
-  List<DropModel> dropDownList = <DropModel>[];
-  List<CheckModel> checkList = <CheckModel>[];
+  List<DropModel> dropDownList = <DropModel>[
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false),
+  ];
+  // List<D> checkList = <CheckModel>[];
 
   SharedPref _sharedPref = new SharedPref();
 
@@ -32,47 +54,49 @@ class ClientProductsDetailController {
         Product.fromJsonList(await _sharedPref.read('order')).toList;
 
     selectedProducts.forEach((p) {
-      print('Producto seleccionado: ${p.toJson()}');
+      // print('Producto seleccionado: ${p.toJson()}');
     });
 
     refresh();
   }
 
   void addToBag() {
-    int index = selectedProducts.indexWhere((p) => p.id == product.id);
+    // int index = selectedProducts.indexWhere((p) => p.id == product.id);
 
-    if (index == -1) {
-      // PRODUCTOS SELECCIONADOS NO EXISTE ESE PRODUCTO
-      if (product.quantity == null) {
-        product.quantity = 1;
-      }
+    //  dropDownList.add(findex);
 
-      selectedProducts.add(product);
-    } else {
-      selectedProducts[index].quantity = counter;
+    // PRODUCTOS SELECCIONADOS NO EXISTE ESE PRODUCTO
+    if (product.quantity == null) {
+      product.quantity = 1;
     }
-    checkList.forEach((element) {
-   //   print(element.id);
-    });
+    product.sabores = valores.toString();
+    //  product.sabores = sabor;
 
-    // _sharedPref.save('order', selectedProducts);
-    // _sharedPref.save('features', checkList.toString());
+    selectedProducts.add(product);
+
+    _sharedPref.save('order', selectedProducts);
+    _sharedPref.remove('features');
+    _sharedPref.save('features', dropDownList);
     //  print(checkList.toString());
     Fluttertoast.showToast(msg: 'Producto agregado');
+    valores = [];
+    refresh();
   }
 
-  dropValue(String value, String newValue, int index) {
-    dropDownList[index].name = newValue;
+  dropValue(int index, String newData, String id) {
+    dropDownList.indexWhere((element) => element.id == id);
+    dropDownList[index].name = newData;
+
     // value = newValue;
     refresh();
   }
 
-  checkBoxValue(bool value, bool newValue, int index) {
+  /* checkBoxValue(bool value, bool newValue, int index) {
     checkList[index].data = newValue;
     print(checkList.toList());
     // value = newValue;
     refresh();
-  }
+  }*/
 
   void addItem() {
     counter = counter + 1;

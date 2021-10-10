@@ -85,6 +85,7 @@ class PushNotificationsProvider {
   Future<void> sendMessage(
       String to, Map<String, dynamic> data, String title, String body) async {
     Uri url = Uri.https('fcm.googleapis.com', '/fcm/send');
+    print('mandando mensaje');
 
     await http.post(url,
         headers: <String, String>{

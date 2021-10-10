@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/pages/restaurant/orders/list/restaurant_orders_list_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
+import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
 class RestaurantOrdersListPage extends StatefulWidget {
@@ -138,7 +139,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                       margin: EdgeInsets.symmetric(vertical: 5),
                       width: double.infinity,
                       child: Text(
-                        'Pedido: 2015-05-23',
+                        'Hora: ${RelativeTimeUtil.getRelativeTime(order.timestamp ?? 0)} ',
                         style: TextStyle(fontSize: 13),
                       ),
                     ),
@@ -157,7 +158,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                       width: double.infinity,
                       margin: EdgeInsets.symmetric(vertical: 5),
                       child: Text(
-                        'Entregar en: ${order.address?.address ?? ''}',
+                        'Entregar en: ${order.address?.neighborhood ?? ''}',
                         style: TextStyle(fontSize: 13),
                         maxLines: 2,
                       ),

@@ -2,9 +2,10 @@
     package="com.jcndev.delivery.app">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     
    <application
-        android:label="Vacan!"
+        android:label="MIKUNA"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true"
         >

@@ -46,7 +46,6 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
               children: [
                 Stack(
                   children: [
-                    // Text('data'),
                     Container(
                       height: 165,
                       decoration: BoxDecoration(
@@ -121,7 +120,6 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                         right: 18,
                         top: 38,
                         child: Container(
-                          //  child:
                           width: 9,
                           height: 9,
                           decoration: BoxDecoration(
@@ -129,7 +127,6 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                               borderRadius:
                                   BorderRadius.all(Radius.circular(30))),
                         )),
-
                     Positioned(
                         left: 5,
                         top: 30,
@@ -151,6 +148,25 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                                 size: 30,
                               ),
                             ),
+                          ),
+                        )),
+                    Positioned(
+                        top: 140,
+                        left: 10,
+                        child: Container(
+                          padding: EdgeInsets.all(1),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(25),
+                            color: Colors.white,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delivery_dining,
+                                color: Colors.orange,
+                              ),
+                              _con.restaurantDistance(widget.restaurant.price)
+                            ],
                           ),
                         ))
                   ],
@@ -190,8 +206,10 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                                   crossAxisCount: 2, childAspectRatio: 0.74),
                           itemCount: snapshot.data?.length ?? 0,
                           itemBuilder: (_, index) {
-                            return FadeIn(
-                                child: _cardProduct(snapshot.data[index]));
+                            return snapshot.data[index].available == 1
+                                ? FadeIn(
+                                    child: _cardProduct(snapshot.data[index]))
+                                : Container();
                           });
                     } else {
                       return FadeIn(
@@ -211,7 +229,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
   Widget _cardProduct(Product product) {
     return GestureDetector(
       onTap: () {
-        _con.openBottomSheet(product);
+        _con.openBottomSheet(product, widget.restaurant);
       },
       child: Container(
         height: 250,

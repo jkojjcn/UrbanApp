@@ -1,15 +1,20 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:jcn_delivery/src/models/category.dart';
 import 'package:jcn_delivery/src/models/product.dart';
-
 import 'package:jcn_delivery/src/pages/client/products/list/client_products_list_page.dart';
 import 'package:jcn_delivery/src/pages/client/products/restaurant/restaurants_list_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
+import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
+import 'dart:async';
+
+import 'package:video_player/video_player.dart';
 
 class RestaurantsListPage extends StatefulWidget {
   LatLng latLngClient;
@@ -34,6 +39,7 @@ class _RestaurantsListPageState extends State<RestaurantsListPage> {
   }
 
   String distanciaPrecio;
+  VideoPlayerController _controller;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +48,7 @@ class _RestaurantsListPageState extends State<RestaurantsListPage> {
       child: Scaffold(
         key: _con.key,
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(145),
+          preferredSize: Size.fromHeight(150),
           child: AppBar(
             title: BounceInDown(
               delay: Duration(seconds: 1),
@@ -57,15 +63,24 @@ class _RestaurantsListPageState extends State<RestaurantsListPage> {
               ),
             ),
             automaticallyImplyLeading: false,
-            backgroundColor: Colors.black,
+            //backgroundColor: Color.fromRGBO(51, 0, 0, 1),
             actions: [_shoppingBag()],
             flexibleSpace: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-              ),
+                  gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  //  Color.fromRGBO(51, 0, 0, 1),
+                  Colors.black,
+                  Colors.black,
+                ],
+              )),
               child: Column(
                 children: [
-                  SizedBox(height: 40),
+                  SizedBox(
+                    height: 45,
+                  ),
                   _menuDrawer(),
                   SizedBox(
                     height: 10,
@@ -84,67 +99,276 @@ class _RestaurantsListPageState extends State<RestaurantsListPage> {
               tabs: List<Widget>.generate(_con.categories.length, (index) {
                 return FadeIn(
                   child: Tab(
-                    child: Text(
-                      _con.categories[index].name ?? '',
-                      style: TextStyle(
-                          fontSize: 12, fontFamily: 'MontserratMedium'),
-                    ),
+                    child: _con.categories[index].name != 'AINICIO'
+                        ? Text(
+                            _con.categories[index].name ?? '',
+                            style: TextStyle(
+                                fontSize: 12, fontFamily: 'MontserratMedium'),
+                          )
+                        : Icon(Icons.home),
                   ),
                 );
               }),
             ),
           ),
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            setState(() {
+              _controller.value.isPlaying
+                  ? _controller.pause()
+                  : _controller.play();
+            });
+          },
+          child: Icon(
+            _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+          ),
+        ),
         drawer: _drawer(),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         body: FadeIn(
           child: TabBarView(
             children: _con.categories.map((Category category) {
-              return FutureBuilder(
-                  future: _con.getProducts(category.id, _con.productName),
-                  builder: (context, AsyncSnapshot<List<Product>> snapshot) {
-                    if (snapshot.hasData) {
-                      if (snapshot.data.length > 0) {
-                        snapshot.data.forEach((element) {
-                          double _distance = Geolocator.distanceBetween(
-                              element.lat,
-                              element.lng,
-                              _con.currentAddress.lat,
-                              _con.currentAddress.lng);
-                          element.price = _distance;
-                        });
-                        snapshot.data
-                            .sort((a, b) => a.price.compareTo(b.price));
-                        return FadeIn(
-                          delay: Duration(milliseconds: 300),
-                          child: GridView.builder(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 1, childAspectRatio: 1.8),
-                              itemCount: snapshot.data?.length ?? 0,
-                              itemBuilder: (_, index) {
-                                return _cardProduct(snapshot.data[index]);
-                              }),
-                        );
+              if (category.name != 'AINICIO') {
+                return FutureBuilder(
+                    future: _con.getProducts(category.id, _con.productName),
+                    builder: (context, AsyncSnapshot<List<Product>> snapshot) {
+                      if (snapshot.hasData) {
+                        if (snapshot.data.length > 0) {
+                          snapshot.data.forEach((element) {
+                            double _distance = Geolocator.distanceBetween(
+                                element.lat,
+                                element.lng,
+                                _con.currentAddress.lat,
+                                _con.currentAddress.lng);
+                            element.price = _distance;
+                          });
+                          snapshot.data
+                              .sort((a, b) => a.price.compareTo(b.price));
+                          return FadeIn(
+                            delay: Duration(milliseconds: 300),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  // Colors.blue[900],
+                                  //  Colors.blue[900],
+                                  Colors.black,
+                                  Colors.black,
+                                ],
+                              )),
+                              child: GridView.builder(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 1,
+                                          childAspectRatio: 1.8),
+                                  itemCount: snapshot.data?.length ?? 0,
+                                  itemBuilder: (_, index) {
+                                    return _cardProduct(snapshot.data[index]);
+                                  }),
+                            ),
+                          );
+                        } else {
+                          return FadeIn(
+                              delay: Duration(milliseconds: 300),
+                              child: NoDataWidget(text: 'No hay productos'));
+                        }
                       } else {
                         return FadeIn(
                             delay: Duration(milliseconds: 300),
                             child: NoDataWidget(text: 'No hay productos'));
                       }
-                    } else {
-                      return FadeIn(
-                          delay: Duration(milliseconds: 300),
-                          child: NoDataWidget(text: 'No hay productos'));
-                    }
-                  });
+                    });
+              } else {
+                /// Promos promos promos
+                ///
+                ///
+                ///
+                /// promos
+                ///
+                return FutureBuilder(
+                    future: _con.getProducts('1', _con.productName),
+                    builder: (context, AsyncSnapshot<List<Product>> snapshot) {
+                      if (snapshot.hasData) {
+                        if (snapshot.data.length > 0) {
+                          snapshot.data.forEach((element) {
+                            double _distance = Geolocator.distanceBetween(
+                                element.lat,
+                                element.lng,
+                                _con.currentAddress.lat,
+                                _con.currentAddress.lng);
+                            element.price = _distance;
+                          });
+                          //    snapshot.data
+                          //      .sort((a, b) => a.name.compareTo(b.name));
+                          return FadeIn(
+                              delay: Duration(milliseconds: 300),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black,
+                                    Colors.black,
+                                    //  Colors.blue[900],
+                                  ],
+                                )),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.7,
+                                child: Stack(
+                                  children: [
+                                    GridView.builder(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 4),
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 1,
+                                                childAspectRatio: 1.5),
+                                        itemCount: snapshot.data?.length ?? 0,
+                                        itemBuilder: (_, index) {
+                                          return _cardProductHome(
+                                              snapshot.data[index]);
+                                        }),
+                                  ],
+                                ),
+                              ));
+                        } else {
+                          return FadeIn(
+                              delay: Duration(milliseconds: 300),
+                              child: NoDataWidget(text: 'No hay productos'));
+                        }
+                      } else {
+                        return FadeIn(
+                            delay: Duration(milliseconds: 300),
+                            child: NoDataWidget(text: 'No hay productos'));
+                      }
+                    });
+              }
             }).toList(),
           ),
         ),
       ),
     );
   }
+  /////////////////////////////// Card home
+  ///
+  ///
+  ///
+  ///
+  ///
+  ///
+  ///
+  ///
+  ///
+  ///Card Home
+
+  Widget _cardProductHome(Product product) {
+    _controller = VideoPlayerController.network(product?.image3)..initialize();
+    return GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ClientProductsListPage(
+                        restaurantId: product.id,
+                        restaurant: product,
+                      )));
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: 15,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2),
+              color: Colors.blueGrey[800],
+            ),
+            child: Stack(
+              children: <Widget>[
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(5),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(product.image1),
+                      ),
+                      SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        product.name,
+                        style: TextStyle(color: Colors.white),
+                      )
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 50),
+                  child: Container(
+                    // height: 100,
+                    width: MediaQuery.of(context).size.width * 1,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.grey,
+                    ),
+                    //s color: Colors.black,
+                    //   child:
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      //  _iconDisponibilidad(),
+                      Padding(
+                        padding: const EdgeInsets.all(1.0),
+                        child: Container(
+                          width: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            //  borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              Padding(
+                                padding: const EdgeInsets.all(1.0),
+                                child: Icon(
+                                  Icons.delivery_dining,
+                                  color: MyColors.primaryColor,
+                                  size: 20,
+                                ),
+                              ),
+                              _con.restaurantDistance(product.price)
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
+  }
+
+  ////////////////////////////////////////////////////////////////////
+  ///
+  ///
+  ///
+  ///widget 2
 
   Widget _cardProduct(Product product) {
     return GestureDetector(
@@ -311,7 +535,12 @@ class _RestaurantsListPageState extends State<RestaurantsListPage> {
         children: [
           Container(
             margin: EdgeInsets.only(right: 15, top: 13),
-            child: Image.asset('assets/iconApp/1.png', width: 30, height: 30),
+            child: Image.asset(
+              'assets/iconApp/20.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
+            ),
           ),
         ],
       ),

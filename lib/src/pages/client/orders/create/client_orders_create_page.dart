@@ -1,6 +1,9 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:jcn_delivery/src/models/features/dropModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_controller.dart';
 import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
@@ -31,36 +34,46 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
   }
 
   double descuentoTotal = 0;
+
+  MaterialStateProperty colorA = MaterialStateProperty.all<Color>(Colors.white);
+  MaterialStateProperty colorB = MaterialStateProperty.all<Color>(Colors.green);
+  bool colorBool = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Mi orden'),
-      ),
-      bottomNavigationBar: Container(
-        height: MediaQuery.of(context).size.height * 0.4,
-        child: Column(
-          children: [
-            Divider(
-              color: Colors.grey[400],
-              endIndent: 30, // DERECHA
-              indent: 30, //IZQUIERDA
-            ),
-            _textTotalPrice(),
-            _buttonNext()
-          ],
+        appBar: AppBar(
+          leading: IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.arrow_back_ios)),
+          title: Text('Mi orden'),
         ),
-      ),
-      body: _con.selectedProducts.length > 0
-          ? ListView(
-              children: _con.selectedProducts.map((Product product) {
-                return _cardProduct(product);
-              }).toList(),
-            )
-          : NoDataWidget(
-              text: 'Ningun producto agregado',
-            ),
-    );
+        bottomNavigationBar: Container(
+          height: MediaQuery.of(context).size.height * 0.4,
+          child: Column(
+            children: [
+              Divider(
+                color: Colors.grey[400],
+                endIndent: 30, // DERECHA
+                indent: 30, //IZQUIERDA
+              ),
+              _textTotalPrice(),
+              _buttonNext()
+            ],
+          ),
+        ),
+        body: _con.selectedProducts.length > 0
+            ? ListView(
+                children: _con.selectedProducts.map((Product product) {
+                  //   print('sabor es ${product.sabores}');
+                  return _cardProduct(product);
+                }).toList(),
+              )
+            : NoDataWidget(
+                text: 'Ningun producto agregado',
+              ));
   }
 
   Widget _buttonNext() {
@@ -68,7 +81,9 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
       margin: EdgeInsets.only(left: 30, right: 30, top: 1, bottom: 10),
       child: ElevatedButton(
         onPressed: () {
-          _conO.createOrder(widget.restaurant.id);
+          Fluttertoast.showToast(msg: 'Gracias por tu compra <3');
+          _conO.createOrder(widget.restaurant.name, widget.restaurant.price);
+
           // _con.goToAddress(widget.restaurant);
         },
         style: ElevatedButton.styleFrom(
@@ -84,7 +99,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 height: 50,
                 alignment: Alignment.center,
                 child: Text(
-                  'CONTINUAR',
+                  'PEDIR',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -114,6 +129,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
         children: [
           _imageProduct(product),
           SizedBox(width: 10),
+          // Text(_con.featuresSelected.length.toString()),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -123,11 +139,22 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                   product.name ?? '',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, fontFamily: 'NimbusSans'),
+                  style: TextStyle(fontSize: 15),
                 ),
               ),
               SizedBox(height: 10),
-              _addOrRemoveItem(product)
+              Container(
+                width: MediaQuery.of(context).size.width * 0.45,
+                child: Text(
+                  product.sabores != "[]"
+                      ? product.sabores
+                      : product.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+
+              //_addOrRemoveItem(product)
             ],
           ),
           Spacer(),
@@ -143,6 +170,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     return IconButton(
         onPressed: () {
           _con.deleteItem(product);
+          _con.init(context, refresh);
         },
         icon: Icon(
           Icons.delete,
@@ -155,6 +183,66 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
       margin: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
       child: Column(
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                  //    width: MediaQuery.of(context).size.width * 0.5,
+                  child: TextButton(
+                      style: ButtonStyle(backgroundColor: colorB),
+                      onPressed: () {
+                        colorBool = false;
+                        colorA =
+                            MaterialStateProperty.all<Color>(Colors.grey[350]);
+                        colorB = MaterialStateProperty.all<Color>(Colors.green);
+                        setState(() {});
+                      },
+                      child: Text(
+                        'Efectivo',
+                        style: TextStyle(color: Colors.black),
+                      ))),
+              colorBool
+                  ? FadeInRight(
+                      duration: Duration(milliseconds: 400),
+                      child: Icon(Icons.credit_card))
+                  : FadeInLeft(
+                      duration: Duration(milliseconds: 400),
+                      child: Icon(Icons.payments)),
+
+              Container(
+                  //   width: MediaQuery.of(context).size.width * 0.5,
+                  child: TextButton(
+                      style: ButtonStyle(backgroundColor: colorA),
+                      onPressed: () {
+                        colorBool = true;
+                        colorA = MaterialStateProperty.all<Color>(Colors.green);
+                        colorB =
+                            MaterialStateProperty.all<Color>(Colors.grey[350]);
+                        setState(() {});
+                      },
+                      child: Text(
+                        'Tarjeta',
+                        style: TextStyle(color: Colors.black),
+                      )))
+              //   Switch(value: false, onChanged: (onChanged) {})
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                //   width: MediaQuery.of(context).size.width * 1,
+                child: Text(
+                  colorBool
+                      ? 'Enviaremos un link de pago.'
+                      : 'Pago en efectivo',
+                  style: TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 3,
+                ),
+              )
+            ],
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -175,10 +263,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 'Repartidor:',
                 style: TextStyle(fontSize: 15),
               ),
-              Text(
-                '${_con.total.toStringAsFixed(2)}\$',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
+              _con.restaurantDistance(widget.restaurant.price)
             ],
           ),
           Row(
@@ -191,19 +276,47 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
               descuentoPorProducto()
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
             children: [
-              Text(
-                'Total: ',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-              ),
-              Text(
-                '${(_con.total - descuentoTotal).toStringAsFixed(2)}\$',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              colorBool
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Transacción por tarjeta (8%):',
+                          style: TextStyle(fontSize: 15),
+                        ),
+                        Text(
+                          '${((_con.total - descuentoTotal + _con.distanciaDelivery) * 0.08).toStringAsFixed(2)}\$',
+                        ),
+                      ],
+                    )
+                  : Container(),
+              FadeIn(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total: ',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                    ),
+                    !colorBool
+                        ? Text(
+                            '${(_con.total - descuentoTotal + _con.distanciaDelivery).toStringAsFixed(2)}\$',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          )
+                        : Text(
+                            '${(((_con.total - descuentoTotal + _con.distanciaDelivery) * 0.08) + (_con.total - descuentoTotal + _con.distanciaDelivery)).toStringAsFixed(2)}\$',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                  ],
+                ),
               ),
             ],
-          ),
+          )
         ],
       ),
     );
@@ -227,7 +340,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     return Container(
       margin: EdgeInsets.only(top: 10),
       child: Text(
-        '${(product.price * product.quantity).toStringAsFixed(2)}',
+        '\$ ${(product.price * product.quantity).toStringAsFixed(2)}',
         style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
       ),
     );
@@ -252,7 +365,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     );
   }
 
-  Widget _addOrRemoveItem(Product product) {
+  /* Widget _addOrRemoveItem(Product product) {
     return Row(
       children: [
         GestureDetector(
@@ -290,7 +403,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
         ),
       ],
     );
-  }
+  }*/
 
   void refresh() {
     setState(() {});

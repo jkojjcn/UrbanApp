@@ -3,19 +3,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/features.dart';
-import 'package:jcn_delivery/src/models/features/checkModel.dart';
 import 'package:jcn_delivery/src/models/features/dropModel.dart';
 import 'package:jcn_delivery/src/models/features/sabores.dart';
 import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
+import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_page.dart';
 import 'package:jcn_delivery/src/pages/client/products/detail/client_products_detail_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'dart:convert';
 
+import 'package:jcn_delivery/src/widgets/cart_row.dart';
+
+// ignore: must_be_immutable
 class ClientProductsDetailPage extends StatefulWidget {
   Product product;
+  Product restaurant;
 
-  ClientProductsDetailPage({Key key, @required this.product}) : super(key: key);
+  ClientProductsDetailPage({Key key, @required this.product, this.restaurant})
+      : super(key: key);
 
   @override
   _ClientProductsDetailPageState createState() =>
@@ -24,6 +30,7 @@ class ClientProductsDetailPage extends StatefulWidget {
 
 class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
   ClientProductsDetailController _con = new ClientProductsDetailController();
+  // ClientOrdersCreateController _conO = new ClientOrdersCreateController();
 
   @override
   void initState() {
@@ -32,55 +39,93 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh, widget.product);
+      _con.dropDownList.clear();
+      _reloadWidget();
     });
   }
 
-  var _checkItems = [];
+  _reloadWidget() {
+    Future.delayed(Duration(seconds: 2), () {
+      _con.init(context, refresh, widget.product);
+      _reloadWidget();
+    });
+  }
+
+  String myValue;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      height: MediaQuery.of(context).size.height * 1,
-      child: ListView(
-        children: [
-          _imageSlideshow(),
-          _textName(),
-          _standartDelivery(widget.product),
-          _features(),
-          _addOrRemoveItem(),
-          _buttonShoppingBag()
-        ],
-      ),
+    return Stack(
+      children: [
+        Container(
+          color: Colors.black,
+          height: MediaQuery.of(context).size.height * 1,
+          child: ListView(
+            children: [
+              _imageSlideshow(),
+              _textName(),
+              _standartDelivery(widget.product),
+              _features(),
+              //   _addOrRemoveItem(),
+              _buttonShoppingBag(),
+            ],
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ClientOrdersCreatePage(
+                            restaurant: widget.restaurant,
+                          )));
+            },
+            child: Row(
+              children: [
+                Icon(Icons.shopping_cart_outlined, color: Colors.orange),
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  color: Colors.black,
+                  child: FadeIn(
+                      child: CartRow(
+                    selectedProducts: _con.selectedProducts,
+                  )),
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
     );
   }
 
   _features() {
+    // _con.dropDownList.clear();
+
     try {
       final data = json.decode(_con.product.features); // CATEGORIAS
       Features features = Features.fromJson(data);
-      print(features.id);
+      //  print(features.id);
       FeaturesSabores dataSaboreas =
           FeaturesSabores.fromJsonList(features.content);
 
-      if (features.content != null && features.id == "dropbutton") {
+      if (features.content != null && features.id != "dropbutton") {
         if (dataSaboreas.toListFeaturesSabores != null) {
           return Padding(
             padding: EdgeInsets.only(left: 40, right: 40),
             child: Column(
               children: [
-                Text(
-                  features.name,
-                  style: TextStyle(color: Colors.white),
-                ),
-                _dropDownWidget(dataSaboreas.toListFeaturesSabores)
+                _dropDownWidget(dataSaboreas.toListFeaturesSabores, features)
               ],
             ),
           );
         } else {
           Container();
         }
-      } else if (features.id == "checkBox") {
+      } else if (features.id != "checkBox") {
         if (dataSaboreas.toListFeaturesSabores != null) {
           return Padding(
             padding: EdgeInsets.only(left: 40, right: 40),
@@ -115,7 +160,7 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
     var items = sabores.map((element) {
       return DropdownMenuItem(value: element.name, child: Text(element.name));
     }).toList();
-    print(items.toString());
+    //print(items.toString());
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.3,
@@ -124,77 +169,112 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
       child: ListView.builder(
           itemCount: sabores.length,
           itemBuilder: (context, index) {
-            _con.checkList.add(CheckModel(
-                index, sabores[index].necessary, sabores[index].price));
+            sabores.forEach((element) {
+              if (_con.dropDownList.contains(element)) {
+                //  print(_con.dropDownList.toList());
+              } else {
+                _con.dropDownList.add(DropModel(
+                    name: element.name,
+                    id: element.id,
+                    price: element.price,
+                    data: element.necessary));
+              }
+            });
+
             //  _con.dropDownList[0].name = sabores[0].name;
             bool initialValue = sabores[0].necessary;
             return CheckboxListTile(
-              //  selectedTileColor: Colors.orange,
+                //  selectedTileColor: Colors.orange,
                 checkColor: Colors.white,
                 activeColor: Colors.orange,
                 title: Text(
-                  sabores[index].name,
+                  _con.dropDownList[index].name,
                   style: TextStyle(color: Colors.white),
                 ),
-                subtitle: Text(sabores[index].price.toString(),
+                subtitle: Text(_con.dropDownList[index].price.toString(),
                     style: TextStyle(color: Colors.white)),
-                value: _con.checkList[index].data ?? initialValue,
+                value: _con.dropDownList[index].data,
                 onChanged: (boxNewvalue) {
-                  _con.checkBoxValue(initialValue, boxNewvalue, index);
+                  //          _con.dropValue(
+                  //              index, boxNewvalue, _con.dropDownList[index].id);
                 });
-
-            /*return ListTile(
-              title: Text(sabores[index].id),
-              trailing: DropdownButton(
-                  //   key: Key(id),
-                  icon: Icon(Icons.add_outlined),
-                  value: _con.dropDownList[index].name ?? initialValue,
-                  onChanged: (newValue) {
-                    _con.dropValue(initialValue, newValue, index);
-                    //    _con.dropValue(value, newValue, cantidad);
-                  },
-                  items: items),
-            );*/
           }),
     );
   }
 
-  _dropDownWidget(List<FeaturesSabores> sabores) {
+  _dropDownWidget(List<FeaturesSabores> sabores, features) {
     //String initialValue = "as";
     var items = sabores.map((element) {
       return DropdownMenuItem(value: element.name, child: Text(element.name));
     }).toList();
-    print(items.toString());
+    // print(items.toString());
+    sabores.forEach((element) {
+      if (_con.dropDownList.contains(element)) {
+        //   print(_con.dropDownList.toList());
+      } else {
+        _con.dropDownList.add(DropModel(
+            name: element.name,
+            id: _con.counter.toString(),
+            price: element.price,
+            data: element.necessary));
+      }
+    });
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
-      width: 400,
-      child: ListView.builder(
-          itemCount: sabores.length,
-          itemBuilder: (context, index) {
-            _con.dropDownList.add(
-                DropModel(index, sabores[index].name, sabores[index].price));
-            //  _con.dropDownList[0].name = sabores[0].name;
-            String initialValue = sabores[0].name;
-            return ListTile(
-              title: Text(sabores[index].id),
-              trailing: DropdownButton(
-                  //   key: Key(id),
-                  icon: Icon(Icons.add_outlined),
-                  value: _con.dropDownList[index].name ?? initialValue,
-                  onChanged: (newValue) {
-                    _con.dropValue(initialValue, newValue, index);
-                    //    _con.dropValue(value, newValue, cantidad);
-                  },
-                  items: items),
-            );
-          }),
-    );
+    return _columnDropList(sabores, features, items);
 
     /*  if (sabores.length == 0) {
       return _dropDown(sabores, _con.dropDownValue, sabores.length);
     } else if (sabores.length == 1) {
     } */
+  }
+
+  Widget _columnDropList(
+      List<FeaturesSabores> sabores, Features features, items) {
+    return Column(
+      children: [
+        Text(
+          features.name,
+          style: TextStyle(color: Colors.white),
+        ),
+        Container(
+          height: 50 * features.max.toDouble(),
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: ListView.builder(
+              itemCount: features.max,
+              itemBuilder: (context, index) {
+                _con.dropDownList.add(DropModel(
+                    id: sabores[index].id,
+                    name: sabores[index].name,
+                    price: sabores[index].price,
+                    data: false));
+                //  _con.dropDownList[0].name = sabores[0].name;
+                String initialValue = sabores[0].name;
+                return ListTile(
+                  title: Text(sabores[index].id,
+                      style: TextStyle(color: Colors.white)),
+                  trailing: DropdownButton(
+
+                      //   key: Key(id),
+                      icon: Icon(Icons.add_outlined),
+                      value: _con.dropDownList[index].name ?? initialValue,
+                      style: TextStyle(color: Colors.green),
+                      onChanged: (newValue) {
+                        _con.valores
+                            .indexWhere((element) => element != newValue);
+                        _con.valores.add(newValue);
+
+                        //  print(myValue);
+                        _con.dropValue(
+                            index, newValue, _con.dropDownList[index].id);
+                        //     _con.dropValue(initialValue, newValue, index, false, false);
+                        //    _con.dropValue(value, newValue, cantidad);
+                      },
+                      items: items),
+                );
+              }),
+        ),
+      ],
+    );
   }
 
   Widget _textName() {
@@ -220,7 +300,11 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
     return Container(
       margin: EdgeInsets.only(left: 30, right: 30, top: 30, bottom: 30),
       child: ElevatedButton(
-        onPressed: _con.addToBag,
+        onPressed: () {
+          _con.addToBag();
+          _con.init(context, refresh, widget.product);
+          //   setState(() {});
+        },
         style: ElevatedButton.styleFrom(
             primary: MyColors.primaryColor,
             padding: EdgeInsets.symmetric(vertical: 5),
@@ -277,7 +361,7 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
     );
   }
 
-  Widget _addOrRemoveItem() {
+/*  Widget _addOrRemoveItem() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 17),
       child: Row(
@@ -317,7 +401,7 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
         ],
       ),
     );
-  }
+  }*/
 
   Widget _imageSlideshow() {
     return SafeArea(
@@ -369,34 +453,29 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
               ),
             ],
             onPageChanged: (value) {
-              print('Page changed: $value');
+              //   print('Page changed: $value');
             },
           ),
           FadeIn(
-            child: Positioned(
-                left: 5,
-                top: 30,
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }, //_con.close,
-                  icon: Container(
-                    height: 30,
-                    width: 30,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 8),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.black,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                )),
-          ),
+              child: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            }, //_con.close,
+            icon: Container(
+              height: 30,
+              width: 30,
+              decoration: BoxDecoration(
+                  color: Colors.white, borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.arrow_back_ios,
+                  color: Colors.black,
+                  size: 20,
+                ),
+              ),
+            ),
+          )),
         ],
       ),
     );

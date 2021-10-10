@@ -96,12 +96,7 @@ class OrdersProvider {
   Future<List<Order>> getByRestaurantId(String status) async {
     //idClient = "asd";
     // status = "PAGADO";
-    print(status);
-    String user_id = sessionUser.id;
-    print(user_id);
-    print(user_id);
-    print(user_id);
-    print(user_id);
+    String user_id = sessionUser.name;
 
     try {
       print('SESION TOKEN: ${sessionUser.sessionToken}');
@@ -149,7 +144,8 @@ class OrdersProvider {
     }
   }
 
-  Future<ResponseApi> updateToDispatched(Order order) async {
+  Future<ResponseApi> updateToDispatched(Order order, double time) async {
+    order.features = time.toString() ?? "000";
     try {
       Uri url = Uri.http(_url, '$_api/updateToDispatched');
       String bodyParams = json.encode(order);

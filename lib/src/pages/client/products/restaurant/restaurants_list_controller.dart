@@ -37,6 +37,8 @@ class RestaurantsListController {
 
   double _distanceBetween;
 
+  List<Product> selectedProducts = [];
+
   PushNotificationsProvider pushNotificationsProvider =
       new PushNotificationsProvider();
 
@@ -44,7 +46,13 @@ class RestaurantsListController {
     this.context = context;
     this.refresh = refresh;
     user = User.fromJson(await _sharedPref.read('user'));
+
     currentAddress = Address.fromJson(await _sharedPref.read('address') ?? {});
+
+
+    selectedProducts =
+        Product.fromJsonList(await _sharedPref.read('order')).toList;
+
     _categoriesRestaurantsProvider.init(context, user);
     _restaurantsProvider.init(context, user);
 
@@ -125,7 +133,6 @@ class RestaurantsListController {
     Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
   }
 
-
   restaurantDistance(_distanceRC) {
     if (_distanceRC / 1000 <= 2) {
       return Text('0.99');
@@ -163,6 +170,4 @@ class RestaurantsListController {
       return Icon(Icons.credit_card);
     }
   }
-
-
 }

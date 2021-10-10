@@ -23,6 +23,7 @@ class RestaurantOrdersDetailController {
 
   double total = 0;
   Order order;
+  double time = 0;
 
   User user;
   List<User> users = [];
@@ -53,22 +54,23 @@ class RestaurantOrdersDetailController {
   }
 
   void updateOrder() async {
-    if (idDelivery != null) {
-      order.idDelivery = idDelivery;
-      ResponseApi responseApi = await _ordersProvider.updateToDispatched(order);
+    try {
+      ResponseApi responseApi =
+          await _ordersProvider.updateToDispatched(order, time);
 
-      User deliveryUser = await _usersProvider.getById(order.idDelivery);
-      sendNotification(deliveryUser.notificationToken);
-      print(deliveryUser.notificationToken);
-      print(deliveryUser.notificationToken);
+      //   User deliveryUser = await _usersProvider.getById(order.idDelivery);
+      users.forEach((element) {
+        sendNotification(element.notificationToken);
+      });
+      //    sendNotification(deliveryUser.notificationToken);
 
-      print(deliveryUser.notificationToken);
+      //  print(deliveryUser.notificationToken);
 
       Fluttertoast.showToast(
           msg: responseApi.message, toastLength: Toast.LENGTH_LONG);
       Navigator.pop(context, true);
-    } else {
-      Fluttertoast.showToast(msg: 'Selecciona el repartidor');
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Intentalo nuevamente');
     }
   }
 

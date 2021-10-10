@@ -1,4 +1,3 @@
-import 'package:background_location/background_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/order.dart';
@@ -25,16 +24,6 @@ class _DeliveryOrdersListPageState extends State<DeliveryOrdersListPage> {
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh);
       _actualizar();
-      BackgroundLocation.setAndroidNotification(
-        title: 'Mikuna Delivery',
-        message: 'Se encuentra receptando ordenes',
-        icon: '@mipmap/ic_launcher',
-      );
-      //await BackgroundLocation.setAndroidConfiguration(1000);
-      BackgroundLocation.startLocationService(distanceFilter: 20);
-      BackgroundLocation.getLocationUpdates((location) {
-        print(location.latitude);
-      });
     });
   }
 
@@ -62,6 +51,7 @@ class _DeliveryOrdersListPageState extends State<DeliveryOrdersListPage> {
                 _menuDrawer(),
               ],
             ),
+            actions: [Checkbox(value: true, onChanged: (value) {})],
             bottom: TabBar(
               indicatorColor: MyColors.primaryColor,
               labelColor: Colors.black,
@@ -148,7 +138,7 @@ class _DeliveryOrdersListPageState extends State<DeliveryOrdersListPage> {
                       margin: EdgeInsets.symmetric(vertical: 5),
                       width: double.infinity,
                       child: Text(
-                        'Pedido: 2015-05-23',
+                        "order.restaurant.id" ?? '',
                         style: TextStyle(fontSize: 13),
                       ),
                     ),

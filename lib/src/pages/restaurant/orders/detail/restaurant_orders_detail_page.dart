@@ -10,6 +10,7 @@ import 'package:jcn_delivery/src/pages/restaurant/orders/detail/restaurant_order
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class RestaurantOrdersDetailPage extends StatefulWidget {
   Order order;
@@ -25,6 +26,7 @@ class _RestaurantOrdersDetailPageState
     extends State<RestaurantOrdersDetailPage> {
   RestaurantOrdersDetailController _con =
       new RestaurantOrdersDetailController();
+  double _value = 10.0;
 
   @override
   void initState() {
@@ -44,7 +46,7 @@ class _RestaurantOrdersDetailPageState
           Container(
             margin: EdgeInsets.only(top: 18, right: 15),
             child: Text(
-              'Total: ${_con.total}\$',
+              'Total: ${_con.total.toStringAsFixed(2)}\$',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           )
@@ -64,9 +66,11 @@ class _RestaurantOrdersDetailPageState
               _textDescription(),
               SizedBox(height: 15),
               _con.order.status != 'PAGADO' ? _deliveryData() : Container(),
-              _con.order.status == 'PAGADO'
-                  ? _dropDown(_con.users)
-                  : Container(),
+              _con.order.status == 'PAGADO' ? _countDownTimer() : Container(),
+
+              //   _con.order.status == 'PAGADO'
+              //      ? _dropDown(_con.users)
+              //     : Container(),
               _textData('Cliente:',
                   '${_con.order.client?.name ?? ''} ${_con.order.client?.lastname ?? ''}'),
               _textData('Entregar en:', '${_con.order.address?.address ?? ''}'),
@@ -89,12 +93,32 @@ class _RestaurantOrdersDetailPageState
     );
   }
 
+  Widget _countDownTimer() {
+    return SfSlider(
+      min: 0.0,
+      max: 60.0,
+      value: _value,
+      stepSize: 5,
+      interval: 20,
+      showTicks: true,
+      showLabels: true,
+      enableTooltip: true,
+      minorTicksPerInterval: 1,
+      onChanged: (dynamic value) {
+        setState(() {
+          _value = value;
+          _con.time = value;
+        });
+      },
+    );
+  }
+
   Widget _textDescription() {
     return Container(
       alignment: Alignment.centerLeft,
       margin: EdgeInsets.symmetric(horizontal: 30),
       child: Text(
-        _con.order == 'PAGADO' ? 'Asignar repartidor' : 'Repartidor asignado',
+        _con.order?.status == 'PAGADO' ? 'Tiempo de preparación ' : 'Delivery',
         style: TextStyle(
             fontStyle: FontStyle.italic,
             color: MyColors.primaryColor,
@@ -102,7 +126,7 @@ class _RestaurantOrdersDetailPageState
       ),
     );
   }
-
+/*
   Widget _dropDown(List<User> users) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
@@ -146,7 +170,7 @@ class _RestaurantOrdersDetailPageState
         ),
       ),
     );
-  }
+  }*/
 
   Widget _deliveryData() {
     return Container(
@@ -233,7 +257,7 @@ class _RestaurantOrdersDetailPageState
                 height: 40,
                 alignment: Alignment.center,
                 child: Text(
-                  'DESPACHAR ORDEN',
+                  'PREPARAR',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

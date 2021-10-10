@@ -25,11 +25,22 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // backgroundColor: Colors.blueGrey[900],
       body: Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            Colors.black,
+            Color.fromRGBO(51, 0, 0, 1),
+          ],
+        )),
         width: double.infinity,
+        height: MediaQuery.of(context).size.height * 1,
         child: Stack(
           children: [
-            Positioned(top: -80, left: -100, child: _circle()),
+            //  Positioned(top: -80, left: -100, child: _circle()),
             Positioned(
               child: _textRegister(),
               top: 65,
@@ -38,7 +49,7 @@ class _RegisterPageState extends State<RegisterPage> {
             Positioned(
               child: _iconBack(),
               top: 51,
-              left: -5,
+              left: 5,
             ),
             Container(
               width: double.infinity,
@@ -50,7 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     SizedBox(height: 30),
                     _textFieldEmail(),
                     _textFieldName(),
-                    _textFieldLastName(),
+                    //       _textFieldLastName(),
                     _textFieldPhone(),
                     _textFieldPassword(),
                     _textFieldConfirmPassword(),
@@ -85,20 +96,19 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _textRegister() {
-    return Text('REGISTRO',
+    return Text('   REGISTRO',
         style: TextStyle(
-            color: Colors.white,
+            color: Colors.white54,
             fontWeight: FontWeight.bold,
             fontSize: 20,
-            fontFamily: 'NimbusSans'));
+            fontFamily: 'MontserratRegular'));
   }
 
   Widget _textFieldEmail() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.emailController,
         keyboardType: TextInputType.emailAddress,
@@ -119,12 +129,11 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.nameController,
         decoration: InputDecoration(
-            hintText: 'Nombre',
+            hintText: 'Nombre y apellido',
             border: InputBorder.none,
             contentPadding: EdgeInsets.all(15),
             hintStyle: TextStyle(color: MyColors.primaryColorDark),
@@ -136,33 +145,11 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _textFieldLastName() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
-      decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
-      child: TextField(
-        controller: _con.lastnameController,
-        decoration: InputDecoration(
-            hintText: 'Apellido',
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(15),
-            hintStyle: TextStyle(color: MyColors.primaryColorDark),
-            prefixIcon: Icon(
-              Icons.person_outline,
-              color: MyColors.primaryColor,
-            )),
-      ),
-    );
-  }
-
   Widget _textFieldPhone() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.phoneController,
         keyboardType: TextInputType.phone,
@@ -183,8 +170,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.passwordController,
         obscureText: true,
@@ -205,8 +191,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.confirmPassswordController,
         obscureText: true,

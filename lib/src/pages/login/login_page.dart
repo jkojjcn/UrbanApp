@@ -27,21 +27,40 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        // backgroundColor: Colors.black,
         body: Container(
+      decoration: BoxDecoration(
+          gradient: LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [
+          Colors.black,
+          Colors.black,
+        ],
+      )),
       width: double.infinity,
+      height: MediaQuery.of(context).size.height * 1,
       child: Stack(
         children: [
-          Positioned(top: -80, left: -100, child: _circleLogin()),
-          Positioned(
-            child: _textLogin(),
-            top: 60,
-            left: 25,
-          ),
           SingleChildScrollView(
             child: Column(
               children: [
-                // _imageBanner(),
-                _lottieAnimation(),
+                SizedBox(
+                  height: 50,
+                ),
+                SafeArea(
+                  child: Container(
+                      width: MediaQuery.of(context).size.width * 1,
+                      height: MediaQuery.of(context).size.height * 0.40,
+                      padding: EdgeInsets.only(top: 5),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: _imageBanner(),
+                      )),
+                ),
+                SizedBox(
+                  height: 30,
+                ),
                 _textFieldEmail(),
                 _textFieldPassword(),
                 _buttonLogin(),
@@ -49,28 +68,24 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
+          Positioned(
+            child: _textLogin(),
+            top: 50,
+            left: 15,
+          ),
         ],
       ),
     ));
   }
 
-  Widget _lottieAnimation() {
-    return Container(
-      margin: EdgeInsets.only(
-          top: 150, bottom: MediaQuery.of(context).size.height * 0.17),
-      child: Lottie.asset('assets/json/delivery.json',
-          width: 350, height: 200, fit: BoxFit.fill),
-    );
-  }
-
   Widget _textLogin() {
     return Text(
-      'LOGIN',
+      'Bien puestito!',
       style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 22,
-          fontFamily: 'NimbusSans'),
+          fontSize: 18,
+          fontFamily: 'MontserratRegular'),
     );
   }
 
@@ -80,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           '¿No tienes cuenta?',
-          style: TextStyle(color: MyColors.primaryColor, fontSize: 17),
+          style: TextStyle(color: Colors.white54, fontSize: 17),
         ),
         SizedBox(width: 7),
         GestureDetector(
@@ -117,8 +132,7 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.passwordController,
         obscureText: true,
@@ -126,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
             hintText: 'Contraseña',
             border: InputBorder.none,
             contentPadding: EdgeInsets.all(15),
-            hintStyle: TextStyle(color: MyColors.primaryColorDark),
+            hintStyle: TextStyle(color: Colors.black87),
             prefixIcon: Icon(
               Icons.lock,
               color: MyColors.primaryColor,
@@ -139,8 +153,7 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
       decoration: BoxDecoration(
-          color: MyColors.primaryOpacityColor,
-          borderRadius: BorderRadius.circular(30)),
+          color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
         controller: _con.emailController,
         keyboardType: TextInputType.emailAddress,
@@ -148,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
             hintText: 'Correo electronico',
             border: InputBorder.none,
             contentPadding: EdgeInsets.all(15),
-            hintStyle: TextStyle(color: MyColors.primaryColorDark),
+            hintStyle: TextStyle(color: Colors.black87),
             prefixIcon: Icon(
               Icons.email,
               color: MyColors.primaryColor,
@@ -157,25 +170,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _circleLogin() {
-    return Container(
-      width: 240,
-      height: 230,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          color: MyColors.primaryColor),
-    );
-  }
-
   Widget _imageBanner() {
-    return Container(
-      margin: EdgeInsets.only(
-          top: 100, bottom: MediaQuery.of(context).size.height * 0.22),
-      child: Image.asset(
-        'assets/img/delivery.png',
-        width: 200,
-        height: 200,
-      ),
+    return Image.asset(
+      'assets/iconApp/20.png',
+      //  width: 400,
+      color: Colors.white,
+      // height: 400,
+      fit: BoxFit.fill,
     );
   }
 }

@@ -54,12 +54,12 @@ dependencies:
   flutter_custom_clippers: ^2.0.0
   firebase_messaging: ^10.0.3
   flutter_local_notifications: ^6.0.0
-  background_location: ^0.6.1
-
   provider:
-
   firebase_auth:
   firebase_core:
+  syncfusion_flutter_sliders: ^19.3.44
+  video_player: ^2.2.0
+  
 
 dev_dependencies:
   flutter_launcher_icons:
@@ -70,8 +70,8 @@ dev_dependencies:
 flutter_icons:
   ios: true
   android: "launcher_icon"
-  image_path: "assets/iconApp/5.jpg"
-  adaptive_icon_background: "assets/iconApp/5.jpg"
+  image_path: "assets/iconApp/22.png"
+  adaptive_icon_background: "assets/iconApp/22.png"
 
 
 # For information on the generic Dart part of this file, see the

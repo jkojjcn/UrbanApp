@@ -46,7 +46,6 @@ class RegisterController {
 
     if (email.isEmpty ||
         name.isEmpty ||
-        lastname.isEmpty ||
         phone.isEmpty ||
         password.isEmpty ||
         confirmPassword.isEmpty) {

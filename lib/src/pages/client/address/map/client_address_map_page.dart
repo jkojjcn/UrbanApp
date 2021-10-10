@@ -30,9 +30,10 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.black,
         title: Text(
           'Ubica tu dirección en el mapa',
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14, color: Colors.white),
         ),
         leading: FadeIn(
           child: Positioned(
@@ -64,6 +65,7 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
         children: [
           _googleMaps(),
           Container(
+            padding: EdgeInsets.only(bottom: 15),
             alignment: Alignment.center,
             child: _iconMyLocation(),
           ),
@@ -116,9 +118,10 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
 
   Widget _iconMyLocation() {
     return Image.asset(
-      'assets/iconApp/1.png',
+      'assets/iconApp/20.png',
       width: 65,
       height: 65,
+      color: Colors.orange,
     );
   }
 
@@ -127,8 +130,8 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
       mapType: MapType.normal,
       initialCameraPosition: _con.initialPosition,
       onMapCreated: _con.onMapCreated,
-      myLocationButtonEnabled: false,
-      myLocationEnabled: false,
+      myLocationButtonEnabled: true,
+      myLocationEnabled: true,
       onCameraMove: (position) {
         _con.initialPosition = position;
       },

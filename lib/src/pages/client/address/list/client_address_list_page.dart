@@ -30,8 +30,13 @@ class _ClientAddressListPageState extends State<ClientAddressListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //   backgroundColor: C,
       appBar: AppBar(
-        title: Text('Direcciones'),
+        backgroundColor: Colors.black,
+        title: Text(
+          'Direcciones',
+          style: TextStyle(color: Colors.white),
+        ),
         actions: [FadeIn(child: _iconAdd())],
       ),
       body: Stack(

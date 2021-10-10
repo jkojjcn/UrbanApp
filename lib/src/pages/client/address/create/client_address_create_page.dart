@@ -29,10 +29,11 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Color.fromRGBO(51, 0, 0, 1),
         title: FadeIn(
           child: Text(
             'Crear dirección',
-            style: TextStyle(fontSize: 15),
+            style: TextStyle(fontSize: 15, color: Colors.white70),
           ),
         ),
         leading: FadeIn(
@@ -119,7 +120,7 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
       child: TextField(
         controller: _con.neighborhoodController,
         decoration: InputDecoration(
-          hintText: '',
+            hintText: '',
             labelText: 'Barrio, sector o ciudadela',
             suffixIcon: Icon(
               Icons.location_city,

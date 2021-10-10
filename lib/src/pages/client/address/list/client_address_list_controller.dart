@@ -40,7 +40,7 @@ class ClientAddressListController {
     refresh();
   }
 
-  void createOrder(String restaurant) async {
+  void createOrder(String restaurant, double distance) async {
     Address a = Address.fromJson(await _sharedPref.read('address') ?? {});
     List<Product> selectedProducts =
         Product.fromJsonList(await _sharedPref.read('order')).toList;
@@ -49,7 +49,9 @@ class ClientAddressListController {
         idClient: userA.id,
         idAddress: a.id,
         products: selectedProducts,
-        restaurant_id: restaurant);
+        restaurantId: restaurant,
+        distance : distance
+        );
     ResponseApi responseApi = await _ordersProvider.create(order);
     print(responseApi);
     print('ordenCreada');
