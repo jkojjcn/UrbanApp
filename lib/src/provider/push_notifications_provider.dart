@@ -1,16 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 
 class PushNotificationsProvider {
-  AndroidNotificationChannel channel;
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  late AndroidNotificationChannel channel;
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   void initPushNotifications() async {
     channel = const AndroidNotificationChannel(
@@ -42,17 +40,13 @@ class PushNotificationsProvider {
   }
 
   void onMessageListener() async {
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((RemoteMessage message) {
-      if (message != null) {}
-    });
+    FirebaseMessaging.instance.getInitialMessage();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('NUEVA NOTIFICACION EN PRIMER PLANO');
 
-      RemoteNotification notification = message.notification;
-      AndroidNotification android = message.notification?.android;
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
       if (notification != null && android != null) {
         flutterLocalNotificationsPlugin.show(
             notification.hashCode,
@@ -63,9 +57,8 @@ class PushNotificationsProvider {
                 channel.id,
                 channel.name,
                 channel.description,
-                // TODO add a proper drawable resource to android, for now using
                 //      one that already exists in example app.
-                icon: 'launch_background',
+                icon: '@mipmap/launcher_icon',
               ),
             ));
       }
@@ -77,9 +70,9 @@ class PushNotificationsProvider {
   }
 
   void saveToken(String idUser) async {
-    String token = await FirebaseMessaging.instance.getToken();
+    String? token = await FirebaseMessaging.instance.getToken();
     UsersProvider usersProvider = new UsersProvider();
-    await usersProvider.updateNotificationToken(idUser, token);
+    await usersProvider.updateNotificationToken(idUser, token!);
   }
 
   Future<void> sendMessage(
@@ -97,6 +90,7 @@ class PushNotificationsProvider {
           'notification': <String, dynamic>{
             'body': body,
             'title': title,
+            'sound': 'default'
           },
           'priority': 'high',
           'ttl': '4500s',

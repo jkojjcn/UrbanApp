@@ -3,10 +3,10 @@ import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
 class RolesController {
-  BuildContext context;
-  Function refresh;
+ late BuildContext context;
+ late Function refresh;
 
-  User user;
+  User? user;
   SharedPref sharedPref = new SharedPref();
 
   Future init(BuildContext context, Function refresh) async {

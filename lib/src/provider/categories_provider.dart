@@ -12,10 +12,10 @@ import 'package:http/http.dart' as http;
 class CategoriesProvider {
   String _url = Environment.API_DELIVERY;
   String _api = '/api/categories';
-  BuildContext context;
-  User sessionUser;
+ late BuildContext context;
+ late User sessionUser;
 
-  Future init(BuildContext context, User sessionUser) {
+  Future init(BuildContext context, User sessionUser)async {
     this.context = context;
     this.sessionUser = sessionUser;
   }
@@ -25,13 +25,13 @@ class CategoriesProvider {
       Uri url = Uri.http(_url, '$_api/getAll/$restaurantId');
       Map<String, String> headers = {
         'Content-type': 'application/json',
-        'Authorization': sessionUser.sessionToken
+        'Authorization': sessionUser.sessionToken!
       };
       final res = await http.get(url, headers: headers);
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id);
+        new SharedPref().logout(context, sessionUser.id!);
       }
       final data = json.decode(res.body); // CATEGORIAS
       Category category = Category.fromJsonList(data);
@@ -43,26 +43,23 @@ class CategoriesProvider {
   }
 
   Future<ResponseApi> create(Category category) async {
-    try {
+  
       Uri url = Uri.http(_url, '$_api/create');
       String bodyParams = json.encode(category);
       Map<String, String> headers = {
         'Content-type': 'application/json',
-        'Authorization': sessionUser.sessionToken
+        'Authorization': sessionUser.sessionToken!
       };
       final res = await http.post(url, headers: headers, body: bodyParams);
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id);
+        new SharedPref().logout(context, sessionUser.id!);
       }
 
       final data = json.decode(res.body);
       ResponseApi responseApi = ResponseApi.fromJson(data);
       return responseApi;
-    } catch (e) {
-      print('Error: $e');
-      return null;
-    }
+  
   }
 }

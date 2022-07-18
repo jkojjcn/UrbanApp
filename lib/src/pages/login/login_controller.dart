@@ -7,7 +7,7 @@ import 'package:jcn_delivery/src/utils/my_snackbar.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
 class LoginController {
-  BuildContext context;
+  late BuildContext context;
   TextEditingController emailController = new TextEditingController();
   TextEditingController passwordController = new TextEditingController();
 
@@ -24,13 +24,11 @@ class LoginController {
 
     print('Usuario: ${user.toJson()}');
 
-    if (user?.sessionToken != null) {
-      if (user.roles.length > 1) {
-        Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
-      } else {
-        Navigator.pushNamedAndRemoveUntil(
-            context, user.roles[0].route, (route) => false);
-      }
+    if (user.roles!.length > 1) {
+      Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
+    } else {
+      Navigator.pushNamedAndRemoveUntil(
+          context, user.roles![0].route!, (route) => false);
     }
   }
 
@@ -42,25 +40,21 @@ class LoginController {
     String email = emailController.text.toLowerCase().trim();
     String password = passwordController.text.trim();
     ResponseApi responseApi = await usersProvider.login(email, password);
-
-    print('Respuesta object: ${responseApi}');
-    print('Respuesta: ${responseApi.toJson()}');
-
-    if (responseApi.success) {
+    if (responseApi.success!) {
       User user = User.fromJson(responseApi.data);
       _sharedPref.save('user', user.toJson());
 
-      pushNotificationsProvider.saveToken(user.id);
+      pushNotificationsProvider.saveToken(user.id!);
 
       print('USUARIO LOGEADO: ${user.toJson()}');
-      if (user.roles.length > 1) {
+      if (user.roles!.length > 1) {
         Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
       } else {
         Navigator.pushNamedAndRemoveUntil(
-            context, user.roles[0].route, (route) => false);
+            context, user.roles![0].route!, (route) => false);
       }
     } else {
-      MySnackbar.show(context, responseApi.message);
+      MySnackbar.show(context, responseApi.message!);
     }
   }
 }

@@ -1,21 +1,20 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/models/product.dart';
-import 'package:jcn_delivery/src/models/user.dart';
-import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
+
 import 'package:jcn_delivery/src/pages/delivery/orders/detail/delivery_orders_detail_controller.dart';
-import 'package:jcn_delivery/src/pages/restaurant/orders/detail/restaurant_orders_detail_controller.dart';
-import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
+// ignore: must_be_immutable
 class DeliveryOrdersDetailPage extends StatefulWidget {
   Order order;
+  double totalDelivery;
 
-  DeliveryOrdersDetailPage({Key key, @required this.order}) : super(key: key);
+  DeliveryOrdersDetailPage(
+      {Key? key, required this.order, required this.totalDelivery})
+      : super(key: key);
 
   @override
   _DeliveryOrdersDetailPageState createState() =>
@@ -27,7 +26,6 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh, widget.order);
@@ -38,13 +36,14 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Orden #${_con.order?.id ?? ''}'),
+        title: Text('Orden #${widget.order.id ?? ''}'),
         actions: [
           Container(
             margin: EdgeInsets.only(top: 18, right: 15),
+            height: 50,
             child: Text(
-              'Total: ${_con.total}\$',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              'Local: ${_con.total.toStringAsFixed(2)}\$',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
           )
         ],
@@ -61,18 +60,24 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
               ),
               SizedBox(height: 10),
               _textData('Cliente:',
-                  '${_con.order.client?.name ?? ''} ${_con.order.client?.lastname ?? ''}'),
-              _textData('Entregar en:', '${_con.order.address?.address ?? ''}'),
+                  '${widget.order.client.name ?? ''} ${widget.order.client.lastname ?? ''}'),
+              _textData(
+                  'Entregar en:', '${widget.order.address.address ?? ''}'),
               _textData('Fecha de pedido:',
-                  '${RelativeTimeUtil.getRelativeTime(_con.order.timestamp ?? 0)}'),
-              _con.order.status != 'ENTREGADO' ? _buttonNext() : Container()
+                  '${RelativeTimeUtil.getRelativeTime(widget.order.timestamp ?? 0)}'),
+              //    widget.order.status != 'ENTREGADO'
+              //        ? widget.order.status == 'DESPACHADO'
+              //            ? _textFieldPrice()
+              //            : Container()
+              //        : Container(),
+              widget.order.status != 'ENTREGADO' ? _buttonNext() : Container()
             ],
           ),
         ),
       ),
-      body: _con.order.products.length > 0
+      body: widget.order.products.length != 0
           ? ListView(
-              children: _con.order.products.map((Product product) {
+              children: widget.order.products.map((Product product) {
                 return _cardProduct(product);
               }).toList(),
             )
@@ -99,10 +104,23 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
     return Container(
       margin: EdgeInsets.only(left: 30, right: 30, top: 5, bottom: 20),
       child: ElevatedButton(
-        onPressed: _con.updateOrder,
+        onPressed: () async {
+          double priceTotal = _con.priceController.numberValue;
+          double deliveryTotal = widget.totalDelivery;
+
+          double newTotalClient = priceTotal + deliveryTotal;
+
+          try {
+            _con.updateOrder(newTotalClient);
+            if (widget.order.status == 'DESPACHADO') {
+              _con.createNotification();
+            }
+          } catch (e) {}
+        },
         style: ElevatedButton.styleFrom(
-            primary:
-                _con.order?.status == 'DESPACHADO' ? Colors.blue : Colors.green,
+            primary: widget.order.status == 'DESPACHADO'
+                ? Colors.blue
+                : Colors.green,
             padding: EdgeInsets.symmetric(vertical: 5),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12))),
@@ -114,7 +132,7 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
                 height: 40,
                 alignment: Alignment.center,
                 child: Text(
-                  _con.order?.status == 'DESPACHADO'
+                  widget.order.status == 'DESPACHADO'
                       ? 'INICIAR ENTREGA'
                       : 'IR AL MAPA',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -150,7 +168,7 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                product?.name ?? '',
+                product.name ?? '',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 10),
@@ -174,9 +192,7 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
           borderRadius: BorderRadius.all(Radius.circular(20)),
           color: Colors.grey[200]),
       child: FadeInImage(
-        image: product.image1 != null
-            ? NetworkImage(product.image1)
-            : AssetImage('assets/img/no-image.png'),
+        image: NetworkImage(product.image1!),
         fit: BoxFit.contain,
         fadeInDuration: Duration(milliseconds: 50),
         placeholder: AssetImage('assets/img/no-image.png'),

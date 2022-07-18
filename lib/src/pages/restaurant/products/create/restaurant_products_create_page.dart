@@ -1,15 +1,13 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/category.dart';
-import 'package:jcn_delivery/src/pages/restaurant/categories/create/restaurant_categories_create_controller.dart';
 import 'package:jcn_delivery/src/pages/restaurant/products/create/restaurant_products_create_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 
 class RestaurantProductsCreatePage extends StatefulWidget {
-  const RestaurantProductsCreatePage({Key key}) : super(key: key);
+  const RestaurantProductsCreatePage({Key? key}) : super(key: key);
 
   @override
   _RestaurantProductsCreatePageState createState() =>
@@ -23,7 +21,6 @@ class _RestaurantProductsCreatePageState
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh);
@@ -48,9 +45,9 @@ class _RestaurantProductsCreatePageState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _cardImage(_con.imageFile1, 1),
-                _cardImage(_con.imageFile2, 2),
-                _cardImage(_con.imageFile3, 3),
+                _cardImage(_con.imageFile1!, 1),
+                _cardImage(_con.imageFile2!, 2),
+                _cardImage(_con.imageFile3!, 3),
               ],
             ),
           ),
@@ -154,8 +151,8 @@ class _RestaurantProductsCreatePageState
                   onChanged: (option) {
                     setState(() {
                       print('Categoria seleccionda $option');
-                      _con.idCategory =
-                          option; // ESTABLECIENDO EL VALOR SELECCIONADO
+                      _con.idCategory = option
+                          .toString(); // ESTABLECIENDO EL VALOR SELECCIONADO
                     });
                   },
                 ),
@@ -171,7 +168,7 @@ class _RestaurantProductsCreatePageState
     List<DropdownMenuItem<String>> list = [];
     categories.forEach((category) {
       list.add(DropdownMenuItem(
-        child: Text(category.name),
+        child: Text(category.name!),
         value: category.id,
       ));
     });
@@ -209,6 +206,7 @@ class _RestaurantProductsCreatePageState
       onTap: () {
         _con.showAlertDialog(numberFile);
       },
+      // ignore: unnecessary_null_comparison
       child: imageFile != null
           ? Card(
               elevation: 3.0,

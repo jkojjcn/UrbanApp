@@ -1,11 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/pages/restaurant/categories/create/restaurant_categories_create_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 
 class RestaurantCategoriesCreatePage extends StatefulWidget {
-  const RestaurantCategoriesCreatePage({Key key}) : super(key: key);
+  const RestaurantCategoriesCreatePage({Key? key}) : super(key: key);
 
   @override
   _RestaurantCategoriesCreatePageState createState() =>
@@ -19,7 +18,6 @@ class _RestaurantCategoriesCreatePageState
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh);

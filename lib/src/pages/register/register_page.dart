@@ -4,7 +4,7 @@ import 'package:jcn_delivery/src/pages/register/register_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key key}) : super(key: key);
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
   _RegisterPageState createState() => _RegisterPageState();
@@ -27,15 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       // backgroundColor: Colors.blueGrey[900],
       body: Container(
-        decoration: BoxDecoration(
-            gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            Colors.black,
-            Color.fromRGBO(51, 0, 0, 1),
-          ],
-        )),
+        decoration: BoxDecoration(color: Colors.black),
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 1,
         child: Stack(
@@ -57,7 +49,7 @@ class _RegisterPageState extends State<RegisterPage> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _imageUser(),
+                    //     _imageUser(),
                     SizedBox(height: 30),
                     _textFieldEmail(),
                     _textFieldName(),
@@ -76,18 +68,17 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _imageUser() {
+/*  Widget _imageUser() {
     return GestureDetector(
       onTap: _con.showAlertDialog,
       child: CircleAvatar(
-        backgroundImage: _con.imageFile != null
-            ? FileImage(_con.imageFile)
-            : AssetImage('assets/img/user_profile_2.png'),
+        backgroundImage: FileImage(_con.imageFile! )
+           ,
         radius: 60,
         backgroundColor: Colors.grey[200],
       ),
     );
-  }
+  }*/
 
   Widget _iconBack() {
     return IconButton(
@@ -221,16 +212,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             padding: EdgeInsets.symmetric(vertical: 15)),
       ),
-    );
-  }
-
-  Widget _circle() {
-    return Container(
-      width: 240,
-      height: 230,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          color: MyColors.primaryColor),
     );
   }
 

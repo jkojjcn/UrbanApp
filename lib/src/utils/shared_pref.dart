@@ -11,11 +11,11 @@ class SharedPref {
   }
 
   Future<dynamic> read(String key) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences?.getInstance();
 
     if (prefs.getString(key) == null) return null;
 
-    return json.decode(prefs.getString(key));
+    return json.decode(prefs.getString(key)?? "");
   }
 
   Future<bool> contains(String key) async {
@@ -30,7 +30,7 @@ class SharedPref {
 
   void logout(BuildContext context, String idUser) async {
     UsersProvider usersProvider = new UsersProvider();
-    usersProvider.init(context);
+    usersProvider.init(context, );
     await usersProvider.logout(idUser);
     await remove('user');
     Navigator.pushNamedAndRemoveUntil(context, 'login', (route) => false);

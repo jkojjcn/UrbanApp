@@ -4,13 +4,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
+import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
 import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:jcn_delivery/src/utils/my_snackbar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sn_progress_dialog/progress_dialog.dart';
 
 class RegisterController {
-  BuildContext context;
+  late BuildContext context;
   TextEditingController emailController = new TextEditingController();
   TextEditingController nameController = new TextEditingController();
   TextEditingController lastnameController = new TextEditingController();
@@ -20,16 +21,17 @@ class RegisterController {
       new TextEditingController();
 
   UsersProvider usersProvider = new UsersProvider();
+  PushNotificationsProvider pushNotificationsProvider =
+      new PushNotificationsProvider();
+  PickedFile? pickedFile;
+  File? imageFile;
+  Function? refresh;
 
-  PickedFile pickedFile;
-  File imageFile;
-  Function refresh;
-
-  ProgressDialog _progressDialog;
+  ProgressDialog? _progressDialog;
 
   bool isEnable = true;
 
-  Future init(BuildContext context, Function refresh) {
+  Future init(BuildContext context, Function refresh) async {
     this.context = context;
     this.refresh = refresh;
     usersProvider.init(context);
@@ -64,47 +66,69 @@ class RegisterController {
       return;
     }
 
-    if (imageFile == null) {
-      MySnackbar.show(context, 'Selecciona una imagen');
-      return;
-    }
-
-    _progressDialog.show(max: 100, msg: 'Espere un momento...');
+    _progressDialog?.show(max: 100, msg: 'Espere un momento...');
     isEnable = false;
 
     User user = new User(
+        image: "",
         email: email,
         name: name,
         lastname: lastname,
         phone: phone,
         password: password);
 
-    Stream stream = await usersProvider.createWithImage(user, imageFile);
-    stream.listen((res) {
-      _progressDialog.close();
+    Stream stream = await usersProvider.createWithImage(user);
+    stream.listen((res) async {
+      _progressDialog?.close();
 
       // ResponseApi responseApi = await usersProvider.create(user);
       ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
       print('RESPUESTA: ${responseApi.toJson()}');
-      MySnackbar.show(context, responseApi.message);
 
-      if (responseApi.success) {
+      if (responseApi.success!) {
+        MySnackbar.show(context, responseApi.message!);
         Future.delayed(Duration(seconds: 3), () {
           Navigator.pushReplacementNamed(context, 'login');
         });
+
+        /*  Future.delayed(Duration(seconds: 2), () {
+          usersProvider.login(email, password);
+          Future.delayed(Duration(seconds: 2), () {
+            if (responseApi.success) {
+              User user = User.fromJson(responseApi.data);
+              _sharedPref.save('user', user.toJson());
+
+              pushNotificationsProvider.saveToken(user.id);
+
+              print('USUARIO LOGEADO: ${user.toJson()}');
+              if (user.roles.length > 1) {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, 'roles', (route) => false);
+              } else {
+                Navigator.pushNamedAndRemoveUntil(
+                    context, user.roles[0].route, (route) => false);
+              }
+            } else {
+              MySnackbar.show(context, responseApi.message);
+            }
+          });
+        });
+           */
       } else {
         isEnable = true;
+        MySnackbar.show(context, 'Error: Correo o número ya registrado.');
       }
     });
   }
 
   Future selectImage(ImageSource imageSource) async {
+    // ignore: deprecated_member_use
     pickedFile = await ImagePicker().getImage(source: imageSource);
     if (pickedFile != null) {
-      imageFile = File(pickedFile.path);
+      // imageFile = File(pickedFile.path);
     }
     Navigator.pop(context);
-    refresh();
+    refresh!();
   }
 
   void showAlertDialog() {

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/pages/client/update/client_update_controller.dart';
-import 'package:jcn_delivery/src/pages/register/register_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 
 class ClientUpdatePage extends StatefulWidget {
-  const ClientUpdatePage({Key key}) : super(key: key);
+  const ClientUpdatePage({Key? key}) : super(key: key);
 
   @override
   _ClientUpdatePageState createState() => _ClientUpdatePageState();
@@ -16,7 +15,6 @@ class _ClientUpdatePageState extends State<ClientUpdatePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
@@ -52,11 +50,12 @@ class _ClientUpdatePageState extends State<ClientUpdatePage> {
     return GestureDetector(
       onTap: _con.showAlertDialog,
       child: CircleAvatar(
-        backgroundImage: _con.imageFile != null
+        backgroundImage: NetworkImage(_con.user.image ?? ""),
+        /*_con.imageFile != null
             ? FileImage(_con.imageFile)
             : _con.user?.image != null
                 ? NetworkImage(_con.user?.image)
-                : AssetImage('assets/img/user_profile_2.png'),
+                : AssetImage('assets/img/user_profile_2.png'),*/
         radius: 60,
         backgroundColor: Colors.grey[200],
       ),

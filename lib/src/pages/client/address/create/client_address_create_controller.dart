@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:jcn_delivery/src/models/address.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
@@ -10,33 +11,34 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class ClientAddressCreateController {
-  BuildContext context;
-  Function refresh;
+  late BuildContext context;
+  late Function refresh;
 
   TextEditingController refPointController = new TextEditingController();
   TextEditingController addressController = new TextEditingController();
   TextEditingController neighborhoodController = new TextEditingController();
 
-  Map<String, dynamic> refPoint;
+  Map<String, dynamic>? refPoint;
+  LatLng? addressLatLng;
 
   AddressProvider _addressProvider = new AddressProvider();
-  User user;
+  User? user;
   SharedPref _sharedPref = new SharedPref();
 
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
     this.refresh = refresh;
     user = User.fromJson(await _sharedPref.read('user'));
-    _addressProvider.init(context, user);
+    _addressProvider.init(context, user!);
   }
 
   void createAddress() async {
     String addressName = addressController.text;
     String neighborhood = neighborhoodController.text;
-    double lat = refPoint['lat'] ?? 0;
-    double lng = refPoint['lng'] ?? 0;
+    double lat = addressLatLng?.latitude ?? 0;
+    double lng = addressLatLng?.longitude ?? 0;
 
-    if (addressName.isEmpty || neighborhood.isEmpty || lat == 0 || lng == 0) {
+    if (addressName.isEmpty || neighborhood.isEmpty) {
       MySnackbar.show(context, 'Completa todos los campos');
       return;
     }
@@ -46,16 +48,20 @@ class ClientAddressCreateController {
         neighborhood: neighborhood,
         lat: lat,
         lng: lng,
-        idUser: user.id);
+        idUser: user?.id!);
 
     try {
       ResponseApi responseApi = await _addressProvider.create(address);
 
-      if (responseApi.success) {
+      if (responseApi.success!) {
         address.id = responseApi.data;
         _sharedPref.save('address', address);
 
-        Fluttertoast.showToast(msg: responseApi.message);
+        Fluttertoast.showToast(msg: responseApi.message!);
+        Fluttertoast.showToast(msg: 'Registrando para futuras carreras.. ');
+        Fluttertoast.showToast(
+            msg: 'Selecciona la dirección en tu lista de ubicaciones',
+            toastLength: Toast.LENGTH_LONG);
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -63,6 +69,7 @@ class ClientAddressCreateController {
 
       Fluttertoast.showToast(msg: 'Guardado');
       Navigator.pop(context, true);
+      refresh();
     }
   }
 
@@ -74,7 +81,7 @@ class ClientAddressCreateController {
         builder: (context) => ClientAddressMapPage());
 
     if (refPoint != null) {
-      refPointController.text = refPoint['address'];
+      refPointController.text = refPoint?['address'];
       refresh();
     }
   }

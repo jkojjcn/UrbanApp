@@ -4,7 +4,7 @@ import 'package:jcn_delivery/src/models/rol.dart';
 import 'package:jcn_delivery/src/pages/roles/roles_controller.dart';
 
 class RolesPage extends StatefulWidget {
-  const RolesPage({Key key}) : super(key: key);
+  const RolesPage({Key? key}) : super(key: key);
 
   @override
   _RolesPageState createState() => _RolesPageState();
@@ -15,7 +15,6 @@ class _RolesPageState extends State<RolesPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
@@ -33,7 +32,7 @@ class _RolesPageState extends State<RolesPage> {
         margin: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.14),
         child: ListView(
             children: _con.user != null
-                ? _con.user.roles.map((Rol rol) {
+                ? _con.user!.roles!.map((Rol rol) {
                     return _cardRol(rol);
                   }).toList()
                 : []),
@@ -44,16 +43,14 @@ class _RolesPageState extends State<RolesPage> {
   Widget _cardRol(Rol rol) {
     return GestureDetector(
       onTap: () {
-        _con.goToPage(rol.route);
+        _con.goToPage(rol.route!);
       },
       child: Column(
         children: [
           Container(
             height: 100,
             child: FadeInImage(
-              image: rol.image != null
-                  ? NetworkImage(rol.image)
-                  : AssetImage('assets/img/no-image.png'),
+              image: NetworkImage(rol.image!),
               fit: BoxFit.contain,
               fadeInDuration: Duration(milliseconds: 50),
               placeholder: AssetImage('assets/img/no-image.png'),
@@ -61,7 +58,7 @@ class _RolesPageState extends State<RolesPage> {
           ),
           SizedBox(height: 15),
           Text(
-            rol.name ?? '',
+            rol.name!,
             style: TextStyle(fontSize: 16, color: Colors.black),
           ),
           SizedBox(height: 25),

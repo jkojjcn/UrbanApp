@@ -1,17 +1,20 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcn_delivery/src/models/category.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/pages/client/products/list/client_products_list_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
+// ignore: must_be_immutable
 class ClientProductsListPage extends StatefulWidget {
-  String restaurantId;
-  Product restaurant;
-  ClientProductsListPage({Key key, this.restaurantId, this.restaurant})
+  String? restaurantId;
+  Product? restaurant;
+  bool? panelState;
+  ClientProductsListPage(
+      {Key? key, this.restaurantId, this.restaurant, this.panelState})
       : super(key: key);
 
   @override
@@ -23,204 +26,183 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-      _con.init(context, refresh, widget.restaurantId);
+      _con.init(context, refresh, widget.restaurantId!);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: _con.categories?.length,
-      child: Scaffold(
-        key: _con.key,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(225),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.black87,
-            flexibleSpace: Column(
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      height: 165,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(50)),
-                      child: FadeIn(
-                        delay: Duration(seconds: 1),
-                        child: ImageSlideshow(
-                          width: double.infinity,
-                          // height: 200,
-                          initialPage: 0,
-                          isLoop: true,
-                          indicatorColor: MyColors.primaryColor,
-                          indicatorBackgroundColor: Colors.grey,
-                          children: [
-                            FadeInImage(
-                              image: widget.restaurant?.image1 != null
-                                  ? NetworkImage(widget.restaurant.image1)
-                                  : AssetImage('assets/img/no-image.png'),
-                              fit: BoxFit.cover,
-                              fadeInDuration: Duration(milliseconds: 50),
-                              placeholder:
-                                  AssetImage('assets/img/no-image.png'),
-                            ),
-                            FadeInImage(
-                              image: widget.restaurant?.image2 != null
-                                  ? NetworkImage(widget.restaurant.image2)
-                                  : AssetImage('assets/img/no-image.png'),
-                              fit: BoxFit.cover,
-                              fadeInDuration: Duration(milliseconds: 50),
-                              placeholder:
-                                  AssetImage('assets/img/no-image.png'),
-                            ),
-                            FadeInImage(
-                              image: widget.restaurant?.image3 != null
-                                  ? NetworkImage(widget.restaurant.image3)
-                                  : AssetImage('assets/img/no-image.png'),
-                              fit: BoxFit.cover,
-                              fadeInDuration: Duration(milliseconds: 50),
-                              placeholder:
-                                  AssetImage('assets/img/no-image.png'),
-                            ),
-                          ],
-                          onPageChanged: (value) {
-                            print('Page changed: $value');
-                          },
-                          autoPlayInterval: 30000,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 15,
-                      top: 25,
-                      child: GestureDetector(
-                        onTap: () {
-                          _con.goToOrderCreatePage(widget.restaurant);
-                        },
-                        child: Container(
-                          height: 30,
-                          width: 30,
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white),
-                          margin: EdgeInsets.only(left: 25, top: 13),
-                          child: Icon(
-                            Icons.shopping_cart_outlined,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                        right: 18,
-                        top: 38,
-                        child: Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                              color: Colors.green,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(30))),
-                        )),
-                    Positioned(
-                        left: 5,
-                        top: 30,
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          }, //_con.close,
-                          icon: Container(
-                            height: 50,
-                            width: 50,
+      length: _con.categories.length,
+      child: SafeArea(
+        child: Scaffold(
+          key: _con.key,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(265),
+            child: AppBar(
+              automaticallyImplyLeading: false,
+              //  backgroundColor: Colors.black,
+              flexibleSpace: Column(
+                children: [
+                  Stack(
+                    children: [
+                      Hero(
+                        tag: 'abrirRestaurante',
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            height: 165,
+                            width: MediaQuery.of(context).size.width * 1,
                             decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10)),
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8),
-                              child: Icon(
-                                Icons.arrow_back_ios,
-                                color: Colors.black,
-                                size: 30,
-                              ),
+                                borderRadius: BorderRadius.circular(50)),
+                            child: FadeInImage(
+                              image: NetworkImage(widget.restaurant!.image3!),
+                              fit: BoxFit.fill,
+                              fadeInDuration: Duration(milliseconds: 50),
+                              placeholder:
+                                  AssetImage('assets/img/no-image.png'),
                             ),
                           ),
-                        )),
-                    Positioned(
-                        top: 140,
-                        left: 10,
-                        child: Container(
-                          padding: EdgeInsets.all(1),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(25),
-                            color: Colors.white,
+                        ),
+                      ),
+                      Positioned(
+                        right: 15,
+                        top: 25,
+                        child: GestureDetector(
+                          onTap: () {
+                            _con.goToOrderCreatePage(widget.restaurant!);
+                          },
+                          child: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white),
+                            margin: EdgeInsets.only(left: 25, top: 13),
+                            child: Icon(
+                              Icons.shopping_cart_outlined,
+                              color: Colors.black,
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delivery_dining,
-                                color: Colors.orange,
+                        ),
+                      ),
+                      Positioned(
+                          right: 18,
+                          top: 38,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(30))),
+                          )),
+                      widget.panelState!
+                          ? FadeIn(
+                              child: Hero(
+                              tag: 'abrirRestaurante',
+                              child: IconButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                }, //_con.close,
+                                icon: Container(
+                                  height: 30,
+                                  width: 30,
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 8),
+                                    child: Icon(
+                                      Icons.arrow_back_ios,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              _con.restaurantDistance(widget.restaurant.price)
-                            ],
-                          ),
-                        ))
-                  ],
-                ),
-                SizedBox(height: 15),
-                _textFieldSearch()
-              ],
-            ),
-            bottom: TabBar(
-              indicatorColor: MyColors.primaryColor,
-              labelColor: Colors.orange,
-              unselectedLabelColor: Colors.grey[200],
-              isScrollable: true,
-              tabs: List<Widget>.generate(_con.categories.length, (index) {
-                return Tab(
-                  child: Text(_con.categories[index].name ?? ''),
-                );
-              }),
+                            ))
+                          : Container(),
+                      Positioned(
+                          top: 140,
+                          left: 10,
+                          child: Container(
+                            padding: EdgeInsets.all(1),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(25),
+                              color: Colors.white,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delivery_dining,
+                                  color: Colors.amber,
+                                ),
+                                _con.restaurantDistance(
+                                    widget.restaurant!.price!)
+                              ],
+                            ),
+                          ))
+                    ],
+                  ),
+                  SizedBox(height: 15),
+                  _textFieldSearch()
+                ],
+              ),
+              bottom: TabBar(
+                indicatorColor: MyColors.primaryColor,
+                labelColor: Colors.amber,
+                unselectedLabelColor: Colors.grey[200],
+                isScrollable: true,
+                tabs: List<Widget>.generate(_con.categories.length, (index) {
+                  return Tab(
+                    child: Text(
+                      _con.categories[index].name ?? '',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                  );
+                }),
+              ),
             ),
           ),
-        ),
-        backgroundColor: Colors.black,
-        drawer: _drawer(),
-        body: TabBarView(
-          children: _con.categories.map((Category category) {
-            return FutureBuilder(
-                future: _con.getProducts(
-                    category.id, _con.productName, widget.restaurantId),
-                builder: (context, AsyncSnapshot<List<Product>> snapshot) {
-                  if (snapshot.hasData) {
-                    if (snapshot.data.length > 0) {
-                      return GridView.builder(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 20),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2, childAspectRatio: 0.74),
-                          itemCount: snapshot.data?.length ?? 0,
-                          itemBuilder: (_, index) {
-                            return snapshot.data[index].available == 1
-                                ? FadeIn(
-                                    child: _cardProduct(snapshot.data[index]))
-                                : Container();
-                          });
+          backgroundColor: Color.fromARGB(255, 7, 7, 7),
+          // drawer: _drawer(),
+          body: TabBarView(
+            children: _con.categories.map((Category category) {
+              return FutureBuilder(
+                  future: _con.getProducts(
+                      category.id!, _con.productName, widget.restaurantId!),
+                  builder: (context, AsyncSnapshot<List<Product>> snapshot) {
+                    if (snapshot.hasData) {
+                      if (snapshot.data!.length > 0) {
+                        snapshot.data
+                            ?.sort(((a, b) => a.name!.compareTo(b.name!)));
+                        return GridView.builder(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 2, vertical: 1),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2, childAspectRatio: 0.98),
+                            itemCount: snapshot.data?.length ?? 0,
+                            itemBuilder: (_, index) {
+                              return Hero(
+                                  tag: 'productImage',
+                                  child: _cardProduct(snapshot.data![index]));
+                            });
+                      } else {
+                        return FadeIn(
+                            child: NoDataWidget(text: 'No hay productos'));
+                      }
                     } else {
                       return FadeIn(
                           child: NoDataWidget(text: 'No hay productos'));
                     }
-                  } else {
-                    return FadeIn(
-                        child: NoDataWidget(text: 'No hay productos'));
-                  }
-                });
-          }).toList(),
+                  });
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -229,59 +211,90 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
   Widget _cardProduct(Product product) {
     return GestureDetector(
       onTap: () {
-        _con.openBottomSheet(product, widget.restaurant);
+        product.available != 0
+            ? _con.openBottomSheet(product, widget.restaurant!)
+            : Fluttertoast.showToast(msg: 'Producto agotado por ahora..');
       },
       child: Container(
-        height: 250,
+        height: 200,
         child: Card(
-          elevation: 5.0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          color: Color.fromARGB(255, 39, 39, 39),
+          //  elevation: 5.0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Stack(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    height: 130,
-                    margin: EdgeInsets.only(top: 5),
-                    //  width: MediaQuery.of(context).size.width * 0.15,
-                    padding: EdgeInsets.all(15),
-                    child: FadeInImage(
-                      image: product.image1 != null
-                          ? NetworkImage(product.image1)
-                          : AssetImage('assets/img/pizza2.png'),
-                      fit: BoxFit.fill,
-                      fadeInDuration: Duration(milliseconds: 50),
-                      placeholder: AssetImage('assets/img/no-image.png'),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(27)),
+                      child: FadeInImage(
+                        image: NetworkImage(product.image1!),
+                        fit: BoxFit.contain,
+                        fadeInDuration: Duration(milliseconds: 50),
+                        placeholder: AssetImage('assets/img/no-image.png'),
+                      ),
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20),
-                    height: 33,
+                    padding: EdgeInsets.only(left: 4, top: 6, right: 4),
+                    // height: 33,
                     child: Text(
                       product.name ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'NimbusSans',
+                          color: Colors.white),
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.only(left: 4, top: 3, right: 4),
+                    // height: 33,
+                    child: Text(
+                      product.description ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 15, fontFamily: 'NimbusSans'),
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontFamily: 'MontserratRegular',
+                          color: Colors.grey),
                     ),
                   ),
                   // Spacer(),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Container(
-                      margin:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                      child: Text(
-                        '${product.price.toStringAsFixed(2) ?? 0}\$',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'NimbusSans'),
-                      ),
-                    ),
-                  )
                 ],
+              ),
+              product.available == 0
+                  ? Container(
+                      color: Colors.grey.withOpacity(0.7),
+                      child: Center(
+                        child: Text(
+                          'Agotado',
+                          style: TextStyle(
+                              fontSize: 19,
+                              color: Colors.white,
+                              fontFamily: 'MontserratSemiBold'),
+                        ),
+                      ),
+                    )
+                  : Container(),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Container(
+                  //  margin: EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                  child: Text(
+                    '${product.price?.toStringAsFixed(2) ?? 0} \$',
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w300,
+                        fontFamily: 'NimbusSans'),
+                  ),
+                ),
               )
             ],
           ),
@@ -296,101 +309,31 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
       margin: EdgeInsets.symmetric(horizontal: 40),
       child: TextField(
         onChanged: _con.onChangeText,
+        cursorColor: Colors.amber,
+        style: TextStyle(color: Colors.white),
         decoration: InputDecoration(
+            fillColor: Colors.white,
             hintText: 'Buscar',
-            suffixIcon: Icon(Icons.search, color: Colors.orange[300]),
+            suffixIcon: Icon(Icons.search, color: Colors.amber),
             hintStyle: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            focusColor: Colors.white,
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(50),
-                borderSide: BorderSide(color: Colors.grey[400])),
+                borderSide: BorderSide(color: Colors.grey[400]!)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(25),
-                borderSide: BorderSide(color: Colors.grey[300])),
+                borderSide: BorderSide(color: Colors.grey[300]!)),
             contentPadding: EdgeInsets.all(15)),
-      ),
-    );
-  }
-
-  Widget _drawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-              decoration: BoxDecoration(color: MyColors.primaryColor),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${_con.user?.name ?? ''} ${_con.user?.lastname ?? ''}',
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                  ),
-                  Text(
-                    _con.user?.email ?? '',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[200],
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic),
-                    maxLines: 1,
-                  ),
-                  Text(
-                    _con.user?.phone ?? '',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[200],
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic),
-                    maxLines: 1,
-                  ),
-                  Container(
-                    height: 60,
-                    margin: EdgeInsets.only(top: 10),
-                    child: FadeInImage(
-                      image: _con.user?.image != null
-                          ? NetworkImage(_con.user?.image)
-                          : AssetImage('assets/img/no-image.png'),
-                      fit: BoxFit.contain,
-                      fadeInDuration: Duration(milliseconds: 50),
-                      placeholder: AssetImage('assets/img/no-image.png'),
-                    ),
-                  )
-                ],
-              )),
-          ListTile(
-            onTap: _con.goToUpdatePage,
-            title: Text('Editar perfil'),
-            trailing: Icon(Icons.edit_outlined),
-          ),
-          ListTile(
-            onTap: _con.goToOrdersList,
-            title: Text('Mis pedidos'),
-            trailing: Icon(Icons.shopping_cart_outlined),
-          ),
-          _con.user != null
-              ? _con.user.roles.length > 1
-                  ? ListTile(
-                      onTap: _con.goToRoles,
-                      title: Text('Seleccionar rol'),
-                      trailing: Icon(Icons.person_outline),
-                    )
-                  : Container()
-              : Container(),
-          ListTile(
-            onTap: _con.logout,
-            title: Text('Cerrar sesion'),
-            trailing: Icon(Icons.power_settings_new),
-          ),
-        ],
       ),
     );
   }
 
   void refresh() {
     setState(() {}); // CTRL + S
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

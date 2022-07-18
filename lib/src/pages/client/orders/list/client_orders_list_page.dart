@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/pages/client/orders/list/client_orders_list_controller.dart';
-import 'package:jcn_delivery/src/pages/delivery/orders/list/delivery_orders_list_controller.dart';
-import 'package:jcn_delivery/src/pages/restaurant/orders/list/restaurant_orders_list_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
+import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
 class ClientOrdersListPage extends StatefulWidget {
-  const ClientOrdersListPage({Key key}) : super(key: key);
+  const ClientOrdersListPage({Key? key}) : super(key: key);
 
   @override
   _ClientOrdersListPageState createState() => _ClientOrdersListPageState();
@@ -19,7 +18,6 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
@@ -31,6 +29,7 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
   _actualizar() {
     Future.delayed(Duration(seconds: 10), () {
       _con.init(context, refresh);
+
       _actualizar();
     });
   }
@@ -38,56 +37,86 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: _con.status?.length,
-      child: Scaffold(
-        key: _con.key,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(100),
-          child: AppBar(
-            title: Text('Mis pedidos'),
-            backgroundColor: MyColors.primaryColor,
-            bottom: TabBar(
-              indicatorColor: MyColors.primaryColor,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.grey[400],
-              isScrollable: true,
-              tabs: List<Widget>.generate(_con.status.length, (index) {
-                return Tab(
-                  child: Text(_con.status[index] ?? ''),
-                );
-              }),
+      length: _con.status.length,
+      child: SafeArea(
+        child: Scaffold(
+          key: _con.key,
+          // backgroundColor: Colors.black,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(100),
+            child: AppBar(
+              title: Text('Mis pedidos'),
+              backgroundColor: Colors.black,
+              bottom: TabBar(
+                indicatorColor: MyColors.primaryColor,
+                labelColor: Colors.orange,
+                unselectedLabelColor: Colors.grey[400],
+                isScrollable: true,
+                tabs: List<Widget>.generate(_con.status.length, (index) {
+                  return Tab(
+                    child: Text(
+                      _con.status[index] == 'PAGADO'
+                          ? 'VERIFICANDO'
+                          : _con.status[index] == 'DESPACHADO'
+                              ? 'PREPARANDO'
+                              : _con.status[index],
+                      style: TextStyle(
+                          fontFamily: 'MontserratRegular', fontSize: 12),
+                    ),
+                  );
+                }),
+              ),
             ),
           ),
-        ),
-        body: TabBarView(
-          children: _con.status.map((String status) {
-            print(status);
-            return FutureBuilder(
-                future: _con.getOrders(status),
-                builder: (context, AsyncSnapshot<List<Order>> snapshot) {
-                  if (snapshot.hasData) {
-                    if (snapshot.data.length > 0) {
-                      return ListView.builder(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 20),
-                          itemCount: snapshot.data?.length ?? 0,
-                          itemBuilder: (_, index) {
-                            return _cardOrder(snapshot.data[index]);
-                          });
+          body: TabBarView(
+            children: _con.status.map((String status) {
+              print(status);
+              return FutureBuilder(
+                  future: _con.getOrders(status),
+                  builder: (context, AsyncSnapshot<List<Order>> snapshot) {
+                    if (snapshot.hasData) {
+                      if (snapshot.data?.length != null) {
+                        return ListView.builder(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 20),
+                            itemCount: snapshot.data?.length ?? 0,
+                            itemBuilder: (_, index) {
+                              return _cardOrder(snapshot.data![index]);
+                            });
+                      } else {
+                        return NoDataWidget(text: 'No hay ordenes');
+                      }
                     } else {
                       return NoDataWidget(text: 'No hay ordenes');
                     }
-                  } else {
-                    return NoDataWidget(text: 'No hay ordenes');
-                  }
-                });
-          }).toList(),
+                  });
+            }).toList(),
+          ),
         ),
       ),
     );
   }
 
   Widget _cardOrder(Order order) {
+    String _tiempoDeOrden =
+        RelativeTimeUtil.getRelativeTime(order.timestamp ?? 0);
+    int? _tiempoDistancia;
+
+    try {
+      if ((order.distance! / 1000) <= 2) {
+        _tiempoDistancia = 10;
+      } else if ((order.distance! / 1000) > 2 &&
+          (order.distance! / 1000) <= 4) {
+        _tiempoDistancia = 20;
+      } else if ((order.distance! / 1000) > 4) {
+        _tiempoDistancia = 30;
+      } else {
+        _tiempoDistancia = 40;
+      }
+    } catch (e) {
+      print(e);
+    }
+
     return GestureDetector(
       onTap: () {
         _con.openBottomSheet(order);
@@ -132,16 +161,50 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
                       margin: EdgeInsets.symmetric(vertical: 5),
                       width: double.infinity,
                       child: Text(
-                        'Pedido: 2015-05-23',
+                        order.restaurant!.name!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 13),
                       ),
                     ),
+                    ((_tiempoDistancia! + order.restaurantTime!) -
+                                double.parse(_tiempoDeOrden)) >=
+                            -30
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.delivery_dining_outlined,
+                                size: 15,
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.5,
+                                child: Text(
+                                  (order.restaurantTime != 0.0
+                                      ? 'Llegada estimada en: ' +
+                                          ((_tiempoDistancia +
+                                                      order.restaurantTime!) -
+                                                  double.parse(_tiempoDeOrden))
+                                              .toStringAsFixed(0) +
+                                          ' minutos'
+                                      : 'Esperando tiempo de preparación'),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 10),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Container(),
                     Container(
                       alignment: Alignment.centerLeft,
                       width: double.infinity,
                       margin: EdgeInsets.symmetric(vertical: 5),
                       child: Text(
-                        'Repartidor: ${order.delivery?.name ?? 'No asignado'} ${order.delivery?.lastname ?? ''}',
+                        'Repartidor: ${order.delivery?.name ?? 'Asignando..'} ${order.delivery?.lastname ?? ''}',
                         style: TextStyle(fontSize: 13),
                         maxLines: 1,
                       ),
@@ -151,14 +214,14 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
                       width: double.infinity,
                       margin: EdgeInsets.symmetric(vertical: 5),
                       child: Text(
-                        'Entregar en: ${order.address?.address ?? ''}',
+                        'Entregar en: ${order.address.address ?? ''}',
                         style: TextStyle(fontSize: 13),
                         maxLines: 2,
                       ),
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),

@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/pages/restaurant/orders/list/restaurant_orders_list_controller.dart';
+import 'package:jcn_delivery/src/pages/restaurant/request/request_page.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
 class RestaurantOrdersListPage extends StatefulWidget {
-  const RestaurantOrdersListPage({Key key}) : super(key: key);
+  const RestaurantOrdersListPage({Key? key}) : super(key: key);
 
   @override
   _RestaurantOrdersListPageState createState() =>
@@ -19,7 +20,6 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
@@ -38,7 +38,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: _con.status?.length,
+      length: _con.status.length,
       child: Scaffold(
         key: _con.key,
         appBar: PreferredSize(
@@ -52,6 +52,18 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                 _menuDrawer(),
               ],
             ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                        (context),
+                        MaterialPageRoute(
+                            builder: (context) => RequestPage(
+                                  user: _con.user,
+                                )));
+                  },
+                  child: Text('Pedir motorizado'))
+            ],
             bottom: TabBar(
               indicatorColor: MyColors.primaryColor,
               labelColor: Colors.black,
@@ -59,7 +71,15 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
               isScrollable: true,
               tabs: List<Widget>.generate(_con.status.length, (index) {
                 return Tab(
-                  child: Text(_con.status[index] ?? ''),
+                  child: Text(
+                    _con.status[index] == 'PAGADO'
+                        ? 'PENDIENTES'
+                        : _con.status[index] == 'DESPACHADO'
+                            ? 'PREPARANDO'
+                            : _con.status[index],
+                    style: TextStyle(
+                        fontFamily: 'MontserratRegular', fontSize: 12),
+                  ),
                 );
               }),
             ),
@@ -69,17 +89,17 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
         body: TabBarView(
           children: _con.status.map((String status) {
             return FutureBuilder(
-                future: _con.getOrdersByRestaurant(status),
+                future: _con.getOrdersByRestaurant(status, _con.user.name!),
                 builder: (context, AsyncSnapshot<List<Order>> snapshot) {
                   //  print(status);
                   if (snapshot.hasData) {
-                    if (snapshot.data.length > 0) {
+                    if (snapshot.data?.length != null) {
                       return ListView.builder(
                           padding: EdgeInsets.symmetric(
                               horizontal: 10, vertical: 20),
                           itemCount: snapshot.data?.length ?? 0,
                           itemBuilder: (_, index) {
-                            return _cardOrder(snapshot.data[index]);
+                            return _cardOrder(snapshot.data![index]);
                           });
                     } else {
                       return NoDataWidget(text: 'No hay ordenes');
@@ -122,7 +142,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                   width: double.infinity,
                   alignment: Alignment.center,
                   child: Text(
-                    'Orden #${order.id}',
+                    'Orden #${order.id ?? ".."}',
                     style: TextStyle(
                         fontSize: 15,
                         color: Colors.white,
@@ -139,7 +159,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                       margin: EdgeInsets.symmetric(vertical: 5),
                       width: double.infinity,
                       child: Text(
-                        'Hora: ${RelativeTimeUtil.getRelativeTime(order.timestamp ?? 0)} ',
+                        'Hora: ${RelativeTimeUtil.getTipicTime(order.timestamp!)} ',
                         style: TextStyle(fontSize: 13),
                       ),
                     ),
@@ -148,7 +168,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                       width: double.infinity,
                       margin: EdgeInsets.symmetric(vertical: 5),
                       child: Text(
-                        'Cliente: ${order.client?.name ?? ''} ${order.client?.lastname ?? ''}',
+                        'Cliente: ${order.client.name ?? ".."} ${order.client.lastname ?? ".."}',
                         style: TextStyle(fontSize: 13),
                         maxLines: 1,
                       ),
@@ -158,7 +178,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                       width: double.infinity,
                       margin: EdgeInsets.symmetric(vertical: 5),
                       child: Text(
-                        'Entregar en: ${order.address?.neighborhood ?? ''}',
+                        'Entregar en: ${order.address.neighborhood}',
                         style: TextStyle(fontSize: 13),
                         maxLines: 2,
                       ),
@@ -195,7 +215,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_con.user?.name ?? ''} ${_con.user?.lastname ?? ''}',
+                    '${_con.user.name!} ${_con.user.lastname!}',
                     style: TextStyle(
                         fontSize: 18,
                         color: Colors.white,
@@ -203,7 +223,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                     maxLines: 1,
                   ),
                   Text(
-                    _con.user?.email ?? '',
+                    _con.user.email ?? "..",
                     style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[200],
@@ -212,7 +232,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                     maxLines: 1,
                   ),
                   Text(
-                    _con.user?.phone ?? '',
+                    _con.user.phone!,
                     style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[200],
@@ -224,9 +244,7 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
                     height: 60,
                     margin: EdgeInsets.only(top: 10),
                     child: FadeInImage(
-                      image: _con.user?.image != null
-                          ? NetworkImage(_con.user?.image)
-                          : AssetImage('assets/img/no-image.png'),
+                      image: NetworkImage(_con.user.image ?? ""),
                       fit: BoxFit.contain,
                       fadeInDuration: Duration(milliseconds: 50),
                       placeholder: AssetImage('assets/img/no-image.png'),
@@ -244,8 +262,8 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
             title: Text('Crear producto'),
             trailing: Icon(Icons.local_pizza),
           ),
-          _con.user != null
-              ? _con.user.roles.length > 1
+          _con.user.name != null
+              ? _con.user.roles!.length > 1
                   ? ListTile(
                       onTap: _con.goToRoles,
                       title: Text('Seleccionar rol'),

@@ -1,9 +1,7 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:jcn_delivery/src/models/features/dropModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_controller.dart';
 import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
@@ -12,8 +10,8 @@ import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
 // ignore: must_be_immutable
 class ClientOrdersCreatePage extends StatefulWidget {
-  Product restaurant;
-  ClientOrdersCreatePage({Key key, this.restaurant}) : super(key: key);
+  Product? restaurant;
+  ClientOrdersCreatePage({Key? key, this.restaurant}) : super(key: key);
 
   @override
   _ClientOrdersCreatePageState createState() => _ClientOrdersCreatePageState();
@@ -25,7 +23,6 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh);
@@ -33,16 +30,17 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     });
   }
 
-  double descuentoTotal = 0;
-
-  MaterialStateProperty colorA = MaterialStateProperty.all<Color>(Colors.white);
-  MaterialStateProperty colorB = MaterialStateProperty.all<Color>(Colors.green);
+  MaterialStateProperty<Color> colorA =
+      MaterialStateProperty.all<Color>(Colors.white);
+  MaterialStateProperty<Color> colorB =
+      MaterialStateProperty.all<Color>(Colors.green);
   bool colorBool = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.black,
           leading: IconButton(
               onPressed: () {
                 Navigator.pop(context);
@@ -51,7 +49,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
           title: Text('Mi orden'),
         ),
         bottomNavigationBar: Container(
-          height: MediaQuery.of(context).size.height * 0.4,
+          height: MediaQuery.of(context).size.height * 0.45,
           child: Column(
             children: [
               Divider(
@@ -59,8 +57,10 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 endIndent: 30, // DERECHA
                 indent: 30, //IZQUIERDA
               ),
-              _textTotalPrice(),
-              _buttonNext()
+              _con.selectedProducts.length > 0
+                  ? _textTotalPrice()
+                  : Container(),
+              _con.selectedProducts.length > 0 ? _buttonNext() : Container()
             ],
           ),
         ),
@@ -71,8 +71,10 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                   return _cardProduct(product);
                 }).toList(),
               )
-            : NoDataWidget(
-                text: 'Ningun producto agregado',
+            : Center(
+                child: NoDataWidget(
+                  text: 'Ningun producto agregado',
+                ),
               ));
   }
 
@@ -82,52 +84,53 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
       child: ElevatedButton(
         onPressed: () {
           Fluttertoast.showToast(msg: 'Gracias por tu compra <3');
-          _conO.createOrder(widget.restaurant.name, widget.restaurant.price);
+          _conO.createOrder(
+              widget.restaurant?.name,
+              widget.restaurant?.price,
+              widget.restaurant?.notificationTokenR,
+              colorBool,
+              (_con.total + _con.distanciaDelivery!),
+              (((_con.total + _con.distanciaDelivery!) * 0.08) +
+                  (_con.total + _con.distanciaDelivery!)));
 
           // _con.goToAddress(widget.restaurant);
         },
         style: ElevatedButton.styleFrom(
             primary: MyColors.primaryColor,
-            padding: EdgeInsets.symmetric(vertical: 5),
+            padding: EdgeInsets.symmetric(vertical: 2),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12))),
         child: Stack(
+          //mainAxisSize: MainAxisSize.max,
+          //    mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Align(
+            /*   Align(
+                alignment: Alignment.c,
+                child: Image.asset(
+                  'assets/iconApp/2.png',
+                  width: 50,
+                  height: 50,
+                )),*/
+            Container(
+              height: 50,
               alignment: Alignment.center,
-              child: Container(
-                height: 50,
-                alignment: Alignment.center,
-                child: Text(
-                  'PEDIR',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+              child: Text(
+                'CREAR PEDIDO',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                margin: EdgeInsets.only(left: 80, top: 9),
-                height: 30,
-                child: Icon(
-                  Icons.check_circle,
-                  color: Colors.green,
-                  size: 30,
-                ),
-              ),
-            )
           ],
         ),
       ),
     );
   }
 
-  Widget _cardProduct(Product product) {
+  Widget _cardProduct(Product? product) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
-          _imageProduct(product),
+          _imageProduct(product!),
           SizedBox(width: 10),
           // Text(_con.featuresSelected.length.toString()),
           Column(
@@ -146,9 +149,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
               Container(
                 width: MediaQuery.of(context).size.width * 0.45,
                 child: Text(
-                  product.sabores != "[]"
-                      ? product.sabores
-                      : product.description,
+                  product.sabores == "[]" ? "" : product.sabores!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -193,7 +194,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                       onPressed: () {
                         colorBool = false;
                         colorA =
-                            MaterialStateProperty.all<Color>(Colors.grey[350]);
+                            MaterialStateProperty.all<Color>(Colors.grey[350]!);
                         colorB = MaterialStateProperty.all<Color>(Colors.green);
                         setState(() {});
                       },
@@ -217,7 +218,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                         colorBool = true;
                         colorA = MaterialStateProperty.all<Color>(Colors.green);
                         colorB =
-                            MaterialStateProperty.all<Color>(Colors.grey[350]);
+                            MaterialStateProperty.all<Color>(Colors.grey[350]!);
                         setState(() {});
                       },
                       child: Text(
@@ -263,17 +264,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 'Repartidor:',
                 style: TextStyle(fontSize: 15),
               ),
-              _con.restaurantDistance(widget.restaurant.price)
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Descuento por cantidad:',
-                style: TextStyle(fontSize: 15),
-              ),
-              descuentoPorProducto()
+              _con.restaurantDistance(widget.restaurant?.price)
             ],
           ),
           Column(
@@ -287,7 +278,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                           style: TextStyle(fontSize: 15),
                         ),
                         Text(
-                          '${((_con.total - descuentoTotal + _con.distanciaDelivery) * 0.08).toStringAsFixed(2)}\$',
+                          '${((_con.total + _con.distanciaDelivery!) * 0.08).toStringAsFixed(2)}\$',
                         ),
                       ],
                     )
@@ -303,12 +294,12 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                     ),
                     !colorBool
                         ? Text(
-                            '${(_con.total - descuentoTotal + _con.distanciaDelivery).toStringAsFixed(2)}\$',
+                            '${(_con.total + _con.distanciaDelivery!).toStringAsFixed(2)}\$',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 20),
                           )
                         : Text(
-                            '${(((_con.total - descuentoTotal + _con.distanciaDelivery) * 0.08) + (_con.total - descuentoTotal + _con.distanciaDelivery)).toStringAsFixed(2)}\$',
+                            '${(((_con.total + _con.distanciaDelivery!) * 0.08) + (_con.total + _con.distanciaDelivery!)).toStringAsFixed(2)}\$',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 20),
                           ),
@@ -322,25 +313,11 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     );
   }
 
-  Widget descuentoPorProducto() {
-    num sum = 0;
-    _con.selectedProducts.forEach((element) {
-      sum += element.quantity;
-      print(sum);
-
-      setState(() {
-        descuentoTotal = sum * 0.10;
-      });
-      return sum;
-    });
-    return Text("-  " + descuentoTotal.toStringAsFixed(2));
-  }
-
   Widget _textPrice(Product product) {
     return Container(
       margin: EdgeInsets.only(top: 10),
       child: Text(
-        '\$ ${(product.price * product.quantity).toStringAsFixed(2)}',
+        '\$ ${(product.price! * product.quantity!).toStringAsFixed(2)}',
         style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
       ),
     );
@@ -355,55 +332,13 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
           borderRadius: BorderRadius.all(Radius.circular(20)),
           color: Colors.grey[200]),
       child: FadeInImage(
-        image: product.image1 != null
-            ? NetworkImage(product.image1)
-            : AssetImage('assets/img/no-image.png'),
+        image: NetworkImage(product.image1!),
         fit: BoxFit.contain,
         fadeInDuration: Duration(milliseconds: 50),
         placeholder: AssetImage('assets/img/no-image.png'),
       ),
     );
   }
-
-  /* Widget _addOrRemoveItem(Product product) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () {
-            _con.removeItem(product);
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    bottomLeft: Radius.circular(8)),
-                color: Colors.grey[200]),
-            child: Text('-'),
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          color: Colors.grey[200],
-          child: Text('${product?.quantity ?? 0}'),
-        ),
-        GestureDetector(
-          onTap: () {
-            _con.addItem(product);
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(8),
-                    bottomRight: Radius.circular(8)),
-                color: Colors.grey[200]),
-            child: Text('+'),
-          ),
-        ),
-      ],
-    );
-  }*/
 
   void refresh() {
     setState(() {});

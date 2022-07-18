@@ -1,15 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_controller.dart';
-import 'package:jcn_delivery/src/pages/client/address/map/client_address_map_controller.dart';
-import 'package:jcn_delivery/src/pages/client/orders/map/client_orders_map_controller.dart';
-import 'package:jcn_delivery/src/pages/delivery/orders/map/delivery_orders_map_controller.dart';
-import 'package:jcn_delivery/src/utils/my_colors.dart';
-import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:jcn_delivery/src/models/order.dart';
 
+import 'package:jcn_delivery/src/pages/client/orders/map/client_orders_map_controller.dart';
+
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+// ignore: must_be_immutable
 class ClientOrdersMapPage extends StatefulWidget {
-  const ClientOrdersMapPage({Key key}) : super(key: key);
+  Order? order;
+  ClientOrdersMapPage({Key? key, this.order}) : super(key: key);
 
   @override
   _ClientOrdersMapPageState createState() => _ClientOrdersMapPageState();
@@ -20,16 +23,14 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-      _con.init(context, refresh);
+      _con.init(context, refresh, widget.order!);
     });
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     _con.dispose();
   }
@@ -37,6 +38,16 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Center(
+                child: Text("\$${widget.order?.totalCliente.toString()}")),
+          ),
+        ],
+        title: Text("\Orden #${widget.order?.id}"),
+      ),
       body: Stack(
         children: [
           Container(
@@ -46,6 +57,20 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
             child: Column(
               children: [
                 _buttonCenterPosition(),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Container(
+                      height: 40,
+                      width: 70,
+                      decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(25)),
+                      child: Center(
+                          child: Text(
+                        "${_con.deliverySpeed.toStringAsFixed(0) + " Km/h"}",
+                        style: TextStyle(color: Colors.white),
+                      ))),
+                ),
                 Spacer(),
                 _cardOrderInfo(),
               ],
@@ -73,35 +98,35 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
                 blurRadius: 7,
                 offset: Offset(0, 3))
           ]),
-      child: Column(
-        children: [
-          _listTileAddress(
-              _con.order?.address?.neighborhood, 'Barrio', Icons.my_location),
-          _listTileAddress(
-              _con.order?.address?.address, 'Direccion', Icons.location_on),
-          Divider(
-            color: Colors.grey[400],
-            endIndent: 30,
-            indent: 30,
-          ),
-          _clientInfo(),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            _listTileAddress(widget.order?.address.neighborhood ?? "", 'Barrio',
+                Icons.my_location),
+            _listTileAddress(widget.order?.address.address ?? "", 'Direccion',
+                Icons.location_on),
+            Divider(
+              color: Colors.grey[400],
+              endIndent: 30,
+              indent: 30,
+            ),
+            _clientInfo(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _clientInfo() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 35, vertical: 20),
+      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
       child: Row(
         children: [
           Container(
             height: 50,
             width: 50,
             child: FadeInImage(
-              image: _con.order?.delivery?.image != null
-                  ? NetworkImage(_con.order?.delivery?.image)
-                  : AssetImage('assets/img/no-image.png'),
+              image: NetworkImage(widget.order?.delivery?.image ?? ""),
               fit: BoxFit.cover,
               fadeInDuration: Duration(milliseconds: 50),
               placeholder: AssetImage('assets/img/no-image.png'),
@@ -110,18 +135,33 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
           Container(
             margin: EdgeInsets.only(left: 10),
             child: Text(
-              '${_con.order?.delivery?.name ?? ''} ${_con.order?.delivery?.lastname ?? ''}',
+              '${widget.order?.delivery?.name ?? ''} ${widget.order?.delivery?.lastname ?? ''}',
               style: TextStyle(color: Colors.black, fontSize: 16),
               maxLines: 1,
             ),
           ),
           Spacer(),
           Container(
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  color: Colors.grey[200]),
+              child: TextButton(
+                onPressed: () {
+                  openwhatsapp(widget.order?.delivery!.phone ?? "");
+                },
+                child: Text('WhatsApp'),
+              )),
+          SizedBox(
+            width: 15,
+          ),
+          Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(15)),
                 color: Colors.grey[200]),
             child: IconButton(
-              onPressed: _con.call,
+              onPressed: () {
+                openTelf(widget.order?.delivery!.phone ?? "");
+              },
               icon: Icon(
                 Icons.phone,
                 color: Colors.black,
@@ -133,12 +173,66 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
     );
   }
 
+  openTelf(String number) async {
+    var whatsappURlA = "tel://$number";
+    var whatappURLI = "tel://$number";
+    if (Platform.isIOS) {
+      // for iOS phone only
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatappURLI)) {
+        // ignore: deprecated_member_use
+        await launch(whatappURLI, forceSafariVC: false);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    } else {
+      // android , web
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatsappURlA)) {
+        // ignore: deprecated_member_use
+        await launch(whatsappURlA);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    }
+  }
+
+  openwhatsapp(String number) async {
+    var whatsapp = number;
+    var whatsappURlA =
+        "whatsapp://send?phone=" + "+593" + number + "&text=hello";
+    var whatappURLI = "https://wa.me/$whatsapp?text=${Uri.parse("hello")}";
+    if (Platform.isIOS) {
+      // for iOS phone only
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatappURLI)) {
+        // ignore: deprecated_member_use
+        await launch(whatappURLI, forceSafariVC: false);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: new Text("WhatsApp no está instalado")));
+      }
+    } else {
+      // android , web
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatsappURlA)) {
+        // ignore: deprecated_member_use
+        await launch(whatsappURlA);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: new Text("WhatsApp no está instalado")));
+      }
+    }
+  }
+
   Widget _listTileAddress(String title, String subtitle, IconData iconData) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 30),
       child: ListTile(
         title: Text(
-          title ?? '',
+          title,
           style: TextStyle(fontSize: 13),
         ),
         subtitle: Text(subtitle),

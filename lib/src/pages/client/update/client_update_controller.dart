@@ -12,21 +12,21 @@ import 'package:image_picker/image_picker.dart';
 import 'package:sn_progress_dialog/progress_dialog.dart';
 
 class ClientUpdateController {
-  BuildContext context;
+  late BuildContext context;
   TextEditingController nameController = new TextEditingController();
   TextEditingController lastnameController = new TextEditingController();
   TextEditingController phoneController = new TextEditingController();
 
   UsersProvider usersProvider = new UsersProvider();
 
-  PickedFile pickedFile;
-  File imageFile;
-  Function refresh;
+  PickedFile? pickedFile;
+  File? imageFile;
+  late Function refresh;
 
-  ProgressDialog _progressDialog;
+  ProgressDialog? _progressDialog;
 
   bool isEnable = true;
-  User user;
+  late User user;
   SharedPref _sharedPref = new SharedPref();
 
   Future init(BuildContext context, Function refresh) async {
@@ -39,9 +39,9 @@ class ClientUpdateController {
     print('TOKEN ENVIADO: ${user.sessionToken}');
     usersProvider.init(context, sessionUser: user);
 
-    nameController.text = user.name;
-    lastnameController.text = user.lastname;
-    phoneController.text = user.phone;
+    nameController.text = user.name!;
+    lastnameController.text = user.lastname!;
+    phoneController.text = user.phone!;
     refresh();
   }
 
@@ -55,7 +55,7 @@ class ClientUpdateController {
       return;
     }
 
-    _progressDialog.show(max: 100, msg: 'Espere un momento...');
+    _progressDialog!.show(max: 100, msg: 'Espere un momento...');
     isEnable = false;
 
     User myUser = new User(
@@ -65,17 +65,17 @@ class ClientUpdateController {
         phone: phone,
         image: user.image);
 
-    Stream stream = await usersProvider.update(myUser, imageFile);
+    Stream stream = await usersProvider.update(myUser, imageFile!);
     stream.listen((res) async {
-      _progressDialog.close();
+      _progressDialog!.close();
 
       // ResponseApi responseApi = await usersProvider.create(user);
       ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
-      Fluttertoast.showToast(msg: responseApi.message);
+      Fluttertoast.showToast(msg: responseApi.message!);
 
-      if (responseApi.success) {
+      if (responseApi.success!) {
         user = await usersProvider
-            .getById(myUser.id); // OBTENIENDO EL USUARIO DE LA DB
+            .getById(myUser.id!); // OBTENIENDO EL USUARIO DE LA DB
         print('Usuario obtenido: ${user.toJson()}');
         _sharedPref.save('user', user.toJson());
         Navigator.pushNamedAndRemoveUntil(
@@ -87,9 +87,10 @@ class ClientUpdateController {
   }
 
   Future selectImage(ImageSource imageSource) async {
+    // ignore: deprecated_member_use
     pickedFile = await ImagePicker().getImage(source: imageSource);
     if (pickedFile != null) {
-      imageFile = File(pickedFile.path);
+      imageFile = File(pickedFile!.path);
     }
     Navigator.pop(context);
     refresh();

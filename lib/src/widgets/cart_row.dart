@@ -5,10 +5,11 @@ import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
+// ignore: must_be_immutable
 class CartRow extends StatefulWidget {
   List<Product> selectedProducts = [];
 
-  CartRow({Key key, this.selectedProducts}) : super(key: key);
+  CartRow({Key? key, required this.selectedProducts}) : super(key: key);
   @override
   _CartRowState createState() => _CartRowState();
 }
@@ -55,7 +56,7 @@ class _CartRowState extends State<CartRow> {
                 child: Padding(
                   padding: EdgeInsets.only(left: 4, right: 4),
                   child: CircleAvatar(
-                    backgroundImage: NetworkImage(e.image1),
+                    backgroundImage: NetworkImage(e.image1!),
                   ),
                 ),
               ))

@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:jcn_delivery/src/pages/login/login_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
-import 'package:lottie/lottie.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key key}) : super(key: key);
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -16,7 +15,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
@@ -27,15 +25,15 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        // backgroundColor: Colors.black,
+        //   backgroundColor: Colors.white,
         body: Container(
       decoration: BoxDecoration(
           gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
         colors: [
-          Colors.black,
-          Colors.black,
+          Colors.white,
+          Colors.white,
         ],
       )),
       width: double.infinity,
@@ -95,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           '¿No tienes cuenta?',
-          style: TextStyle(color: Colors.white54, fontSize: 17),
+          style: TextStyle(color: Colors.grey, fontSize: 17),
         ),
         SizedBox(width: 7),
         GestureDetector(
@@ -172,9 +170,9 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _imageBanner() {
     return Image.asset(
-      'assets/iconApp/20.png',
+      'assets/iconApp/logo.png',
       //  width: 400,
-      color: Colors.white,
+      // color: Colors.white,
       // height: 400,
       fit: BoxFit.fill,
     );

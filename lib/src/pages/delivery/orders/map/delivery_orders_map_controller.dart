@@ -20,47 +20,47 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class DeliveryOrdersMapController {
-  BuildContext context;
-  Function refresh;
-  Position _position;
-  StreamSubscription _positionStream;
+  late BuildContext context;
+  late Function refresh;
+  Position? _position;
+  StreamSubscription? _positionStream;
 
-  String addressName;
-  LatLng addressLatLng;
+  String? addressName;
+  LatLng? addressLatLng;
 
   CameraPosition initialPosition =
-      CameraPosition(target: LatLng(1.2125178, -77.2737861), zoom: 14);
+      CameraPosition(target: LatLng(-2.9017336, -79.0154108), zoom: 13);
 
   Completer<GoogleMapController> _mapController = Completer();
 
-  BitmapDescriptor deliveryMarker;
-  BitmapDescriptor homeMarker;
+  BitmapDescriptor? deliveryMarker;
+  BitmapDescriptor? homeMarker;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
 
-  Order order;
+  late Order order;
 
   Set<Polyline> polylines = {};
   List<LatLng> points = [];
 
   OrdersProvider _ordersProvider = new OrdersProvider();
-  User user;
+  late User user;
   SharedPref _sharedPref = new SharedPref();
 
-  double _distanceBetween;
+  double? _distanceBetween;
 
   PushNotificationsProvider pushNotificationsProvider =
       new PushNotificationsProvider();
 
   bool isClose = false;
 
-  IO.Socket socket;
+  IO.Socket? socket;
 
-  Future init(BuildContext context, Function refresh) async {
+  Future init(BuildContext context, Function refresh, Order orderWidget) async {
     this.context = context;
     this.refresh = refresh;
-    order = Order.fromJson(
-        ModalRoute.of(context).settings.arguments as Map<String, dynamic>);
-    deliveryMarker = await createMarkerFromAsset('assets/img/delivery2.png');
+    order = orderWidget;
+    deliveryMarker =
+        await createMarkerFromAsset('assets/iconApp/deliveryIcon.png');
     homeMarker = await createMarkerFromAsset('assets/img/home.png');
 
     socket = IO.io(
@@ -68,7 +68,7 @@ class DeliveryOrdersMapController {
       'transports': ['websocket'],
       'autoConnect': false
     });
-    socket.connect();
+    socket?.connect();
 
     user = User.fromJson(await _sharedPref.read('user'));
     _ordersProvider.init(context, user);
@@ -87,29 +87,30 @@ class DeliveryOrdersMapController {
   }
 
   void saveLocation() async {
-    order.lat = _position.latitude;
-    order.lng = _position.longitude;
+    order.lat = _position!.latitude;
+    order.lng = _position!.longitude;
     await _ordersProvider.updateLatLng(order);
   }
 
   void emitPosition() {
-    socket.emit('position', {
-      'id_order': order.id,
-      'lat': _position.latitude,
-      'lng': _position.longitude,
+    double transform = 1.6;
+    double _speed = _position?.speed ?? 0;
+    double _finalSpeed = _speed * transform;
+    socket?.emit('position', {
+      'id_order': order.id ?? 'Libre',
+      'lat': _position?.latitude,
+      'lng': _position?.longitude,
+      'speed': _finalSpeed,
+      'heading': _position?.heading
     });
   }
 
   void isCloseToDeliveryPosition() {
-    _distanceBetween = Geolocator.distanceBetween(_position.latitude,
-        _position.longitude, order.address.lat, order.address.lng);
+    _distanceBetween = Geolocator.distanceBetween(_position!.latitude,
+        _position!.longitude, order.address.lat!, order.address.lng!);
 
-    print('-------- DIOSTANCIA ${_distanceBetween} ----------');
-
-    if (_distanceBetween <= 200 && !isClose) {
-      print('-------- ESTA CERCA ${_distanceBetween} ----------');
-      print('-------- TOKEN ${order.client.notificationToken} ----------');
-      sendNotification(order.client.notificationToken);
+    if (_distanceBetween! <= 200 && !isClose) {
+      sendNotification(order.client.notificationToken!);
       isClose = true;
     }
   }
@@ -121,11 +122,14 @@ class DeliveryOrdersMapController {
         'https://waze.com/ul?ll=${order.address.lat.toString()},${order.address.lng.toString()}&navigate=yes';
     try {
       bool launched =
+          // ignore: deprecated_member_use
           await launch(url, forceSafariVC: false, forceWebView: false);
       if (!launched) {
+        // ignore: deprecated_member_use
         await launch(fallbackUrl, forceSafariVC: false, forceWebView: false);
       }
     } catch (e) {
+      // ignore: deprecated_member_use
       await launch(fallbackUrl, forceSafariVC: false, forceWebView: false);
     }
   }
@@ -137,28 +141,149 @@ class DeliveryOrdersMapController {
         'https://www.google.com/maps/search/?api=1&query=${order.address.lat.toString()},${order.address.lng.toString()}';
     try {
       bool launched =
+          // ignore: deprecated_member_use
           await launch(url, forceSafariVC: false, forceWebView: false);
       if (!launched) {
+        // ignore: deprecated_member_use
         await launch(fallbackUrl, forceSafariVC: false, forceWebView: false);
       }
     } catch (e) {
+      // ignore: deprecated_member_use
       await launch(fallbackUrl, forceSafariVC: false, forceWebView: false);
     }
   }
 
   void updateToDelivered() async {
-    if (_distanceBetween <= 200) {
-      ResponseApi responseApi = await _ordersProvider.updateToDelivered(order);
-      if (responseApi.success) {
-        Fluttertoast.showToast(
-            msg: responseApi.message, toastLength: Toast.LENGTH_LONG);
-        Navigator.pushNamedAndRemoveUntil(
-            context, 'delivery/orders/list', (route) => false);
-      }
+    if (_distanceBetween! <= 800) {
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text('VALOR A RECAUDAR'),
+              content: Container(
+                height: 70,
+                width: 100,
+                child: Center(
+                  child: Text(
+                    '\$ ${order.totalCliente?.toStringAsFixed(2)}',
+                    style: TextStyle(color: Colors.orange, fontSize: 30),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Atras',
+                      style: TextStyle(color: Colors.red),
+                    )),
+                TextButton(
+                    onPressed: () async {
+                      ResponseApi responseApi =
+                          await _ordersProvider.updateToDelivered(order);
+                      if (responseApi.success!) {
+                        Fluttertoast.showToast(
+                            msg: responseApi.message!,
+                            toastLength: Toast.LENGTH_LONG);
+                        sendNotificationClientTnx(
+                            order.client.notificationToken!);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, 'delivery/orders/list', (route) => false);
+                      }
+                    },
+                    child: Text(
+                      'ENTREGADO',
+                      style: TextStyle(color: Colors.green),
+                    )),
+              ],
+            );
+          });
     } else {
       MySnackbar.show(
           context, 'Debes estar mas cerca a la posicion de entrega');
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text('Aviso'),
+              content:
+                  Text('El sistema te detecta lejos del punto de entrega.'),
+              actions: [
+                TextButton(
+                    onPressed: () async {
+                      ResponseApi responseApi =
+                          await _ordersProvider.updateToDelivered(order);
+                      if (responseApi.success!) {
+                        showDialog(
+                            context: context,
+                            builder: (_) {
+                              return AlertDialog(
+                                title: Text('VALOR A RECAUDAR'),
+                                content: Container(
+                                  height: 70,
+                                  width: 100,
+                                  child: Center(
+                                    child: Text(
+                                      '\$ ${order.totalCliente?.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                          color: Colors.orange, fontSize: 30),
+                                    ),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        'Atras',
+                                        style: TextStyle(color: Colors.red),
+                                      )),
+                                  TextButton(
+                                      onPressed: () async {
+                                        ResponseApi responseApi =
+                                            await _ordersProvider
+                                                .updateToDelivered(order);
+                                        if (responseApi.success!) {
+                                          Fluttertoast.showToast(
+                                              msg: responseApi.message!,
+                                              toastLength: Toast.LENGTH_LONG);
+                                          sendNotificationClientTnx(
+                                              order.client.notificationToken!);
+                                          Navigator.pushNamedAndRemoveUntil(
+                                              context,
+                                              'delivery/orders/list',
+                                              (route) => false);
+                                        }
+                                      },
+                                      child: Text(
+                                        'ENTREGADO',
+                                        style: TextStyle(color: Colors.green),
+                                      )),
+                                ],
+                              );
+                            });
+                      }
+                    },
+                    child: Text('Entregar de todas formas')),
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text('Atras'))
+              ],
+            );
+          });
     }
+  }
+
+  void sendNotificationClientTnx(String tokenDelivery) {
+    Map<String, dynamic> data = {'click_action': 'FLUTTER_NOTIFICATION_CLICK'};
+
+    pushNotificationsProvider.sendMessage(tokenDelivery, data,
+        'Gracias por su compra.', 'Disfrute de su orden! :D');
   }
 
   Future<void> setPolylines(LatLng from, LatLng to) async {
@@ -173,7 +298,7 @@ class DeliveryOrdersMapController {
 
     Polyline polyline = Polyline(
         polylineId: PolylineId('poly'),
-        color: MyColors.primaryColor,
+        color: MyColors.primaryColor!,
         points: points,
         width: 6);
 
@@ -182,11 +307,18 @@ class DeliveryOrdersMapController {
     refresh();
   }
 
-  void addMarker(String markerId, double lat, double lng, String title,
-      String content, BitmapDescriptor iconMarker) {
+  void addMarker(
+    String markerId,
+    double lat,
+    double lng,
+    String title,
+    String content,
+    BitmapDescriptor iconMarker,
+  ) {
     MarkerId id = MarkerId(markerId);
     Marker marker = Marker(
         markerId: id,
+        anchor: Offset(0.5, 0.5),
         icon: iconMarker,
         position: LatLng(lat, lng),
         infoWindow: InfoWindow(title: title, snippet: content));
@@ -199,34 +331,35 @@ class DeliveryOrdersMapController {
   void selectRefPoint() {
     Map<String, dynamic> data = {
       'address': addressName,
-      'lat': addressLatLng.latitude,
-      'lng': addressLatLng.longitude,
+      'lat': addressLatLng?.latitude,
+      'lng': addressLatLng?.longitude,
     };
 
     Navigator.pop(context, data);
   }
 
   Future<BitmapDescriptor> createMarkerFromAsset(String path) async {
-    ImageConfiguration configuration = ImageConfiguration();
+    ImageConfiguration configuration = ImageConfiguration(size: Size(50, 50));
     BitmapDescriptor descriptor =
         await BitmapDescriptor.fromAssetImage(configuration, path);
     return descriptor;
   }
 
   Future<Null> setLocationDraggableInfo() async {
+    // ignore: unnecessary_null_comparison
     if (initialPosition != null) {
       double lat = initialPosition.target.latitude;
       double lng = initialPosition.target.longitude;
 
       List<Placemark> address = await placemarkFromCoordinates(lat, lng);
 
+      // ignore: unnecessary_null_comparison
       if (address != null) {
         if (address.length > 0) {
-          String direction = address[0].thoroughfare;
-          String street = address[0].subThoroughfare;
-          String city = address[0].locality;
-          String department = address[0].administrativeArea;
-          String country = address[0].country;
+          String direction = address[0].thoroughfare!;
+          String street = address[0].subThoroughfare!;
+          String city = address[0].locality!;
+          String department = address[0].administrativeArea!;
           addressName = '$direction #$street, $city, $department';
           addressLatLng = new LatLng(lat, lng);
           // print('LAT: ${addressLatLng.latitude}');
@@ -255,15 +388,15 @@ class DeliveryOrdersMapController {
       _position = await Geolocator.getLastKnownPosition(); // LAT Y LNG
       saveLocation();
 
-      animateCameraToPosition(_position.latitude, _position.longitude);
-      addMarker('delivery', _position.latitude, _position.longitude,
-          'Tu posicion', '', deliveryMarker);
+      //  animateCameraToPosition(_position.latitude, _position.longitude);
+      addMarker('delivery', _position!.latitude, _position!.longitude,
+          'Tu posicion', '', deliveryMarker!);
 
-      addMarker('home', order.address.lat, order.address.lng,
-          'Lugar de entrega', '', homeMarker);
+      addMarker('home', order.address.lat!, order.address.lng!,
+          'Lugar de entrega', '', homeMarker!);
 
-      LatLng from = new LatLng(_position.latitude, _position.longitude);
-      LatLng to = new LatLng(order.address.lat, order.address.lng);
+      LatLng from = new LatLng(_position!.latitude, _position!.longitude);
+      LatLng to = new LatLng(order.address.lat!, order.address.lng!);
 
       setPolylines(from, to);
 
@@ -274,10 +407,10 @@ class DeliveryOrdersMapController {
 
         emitPosition();
 
-        addMarker('delivery', _position.latitude, _position.longitude,
-            'Tu posicion', '', deliveryMarker);
+        addMarker('delivery', _position!.latitude, _position!.longitude,
+            'Tu posicion', '', deliveryMarker!);
 
-        animateCameraToPosition(_position.latitude, _position.longitude);
+        //   animateCameraToPosition(_position.latitude, _position.longitude);
         isCloseToDeliveryPosition();
 
         refresh();
@@ -288,6 +421,7 @@ class DeliveryOrdersMapController {
   }
 
   void call() {
+    // ignore: deprecated_member_use
     launch("tel://${order.client.phone}");
   }
 
@@ -306,6 +440,7 @@ class DeliveryOrdersMapController {
 
   Future animateCameraToPosition(double lat, double lng) async {
     GoogleMapController controller = await _mapController.future;
+    // ignore: unnecessary_null_comparison
     if (controller != null) {
       controller.animateCamera(CameraUpdate.newCameraPosition(
           CameraPosition(target: LatLng(lat, lng), zoom: 13, bearing: 0)));

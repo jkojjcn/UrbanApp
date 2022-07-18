@@ -6,14 +6,15 @@ FeaturesSabores productFromJson(String str) =>
 String productToJson(FeaturesSabores data) => json.encode(data.toJson());
 
 class FeaturesSabores {
-  String id;
-  String name;
-  String description;
-  double price;
-  int max;
-  int min;
-  bool necessary;
+  String? id;
+  String? name;
+  String? description;
+  double? price;
+  int? max;
+  int? min;
+  bool? necessary;
   List<FeaturesSabores> toListFeaturesSabores = [];
+  List<FeaturesSabores> toListFeaturesSabores2 = [];
 
   FeaturesSabores(
       {this.id,
@@ -36,10 +37,19 @@ class FeaturesSabores {
       );
 
   FeaturesSabores.fromJsonList(List<dynamic> json) {
+    // ignore: unnecessary_null_comparison
     if (json == null) return;
     json.forEach((item) {
       FeaturesSabores features = FeaturesSabores.fromJson(item);
       toListFeaturesSabores.add(features);
+    });
+  }
+  FeaturesSabores.fromJsonList2(List<dynamic> json) {
+    // ignore: unnecessary_null_comparison
+    if (json == null) return;
+    json.forEach((item) {
+      FeaturesSabores features = FeaturesSabores.fromJson(item);
+      toListFeaturesSabores2.add(features);
     });
   }
 

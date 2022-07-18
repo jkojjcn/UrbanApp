@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:jcn_delivery/src/models/category.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
@@ -10,13 +11,12 @@ import 'package:jcn_delivery/src/provider/categories_provider.dart';
 import 'package:jcn_delivery/src/provider/products_provider.dart';
 import 'package:jcn_delivery/src/utils/my_snackbar.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
-import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
 class RestaurantProductsCreateController {
-  BuildContext context;
-  Function refresh;
+  late BuildContext context;
+  late Function refresh;
 
   TextEditingController nameController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
@@ -25,19 +25,19 @@ class RestaurantProductsCreateController {
   CategoriesProvider _categoriesProvider = new CategoriesProvider();
   ProductsProvider _productsProvider = new ProductsProvider();
 
-  User user;
+  late User user;
   SharedPref sharedPref = new SharedPref();
 
   List<Category> categories = [];
-  String idCategory; // ALAMCENAR EL ID DE LA CATEGORIA SELCCIONADA
+  late String idCategory;
 
   // IMAGENES
-  PickedFile pickedFile;
-  File imageFile1;
-  File imageFile2;
-  File imageFile3;
+  PickedFile? pickedFile;
+  File? imageFile1;
+  File? imageFile2;
+  File? imageFile3;
 
-  ProgressDialog _progressDialog;
+  late ProgressDialog _progressDialog;
 
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
@@ -46,7 +46,7 @@ class RestaurantProductsCreateController {
     user = User.fromJson(await sharedPref.read('user'));
     _categoriesProvider.init(context, user);
     _productsProvider.init(context, user);
-   getCategories({});
+    getCategories({});
   }
 
   void getCategories(restaurantId) async {
@@ -69,6 +69,7 @@ class RestaurantProductsCreateController {
       return;
     }
 
+    // ignore: unnecessary_null_comparison
     if (idCategory == null) {
       MySnackbar.show(context, 'Selecciona la categoria del producto');
       return;
@@ -81,9 +82,9 @@ class RestaurantProductsCreateController {
         idCategory: int.parse(idCategory));
 
     List<File> images = [];
-    images.add(imageFile1);
-    images.add(imageFile2);
-    images.add(imageFile3);
+    images.add(imageFile1!);
+    images.add(imageFile2!);
+    images.add(imageFile3!);
 
     _progressDialog.show(max: 100, msg: 'Espere un momento');
     Stream stream = await _productsProvider.create(product, images);
@@ -91,9 +92,9 @@ class RestaurantProductsCreateController {
       _progressDialog.close();
 
       ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
-      MySnackbar.show(context, responseApi.message);
+      MySnackbar.show(context, responseApi.message!);
 
-      if (responseApi.success) {
+      if (responseApi.success!) {
         resetValues();
       }
     });
@@ -105,22 +106,23 @@ class RestaurantProductsCreateController {
     nameController.text = '';
     descriptionController.text = '';
     priceController.text = '0.0';
-    imageFile1 = null;
-    imageFile2 = null;
-    imageFile3 = null;
-    idCategory = null;
+    // imageFile1 = null;
+    // imageFile2 = null;
+    // imageFile3 = null;
+    // idCategory = null;
     refresh();
   }
 
-  Future selectImage(ImageSource imageSource, int numberFile) async {
-    pickedFile = await ImagePicker().getImage(source: imageSource);
+  Future selectImage(ImageSource? imageSource, int numberFile) async {
+    // ignore: deprecated_member_use
+    pickedFile = await ImagePicker().getImage(source: imageSource!);
     if (pickedFile != null) {
       if (numberFile == 1) {
-        imageFile1 = File(pickedFile.path);
+        //    imageFile1 = File(pickedFile.path);
       } else if (numberFile == 2) {
-        imageFile2 = File(pickedFile.path);
+        //    imageFile2 = File(pickedFile.path);
       } else if (numberFile == 3) {
-        imageFile3 = File(pickedFile.path);
+        //    imageFile3 = File(pickedFile.path);
       }
     }
     Navigator.pop(context);

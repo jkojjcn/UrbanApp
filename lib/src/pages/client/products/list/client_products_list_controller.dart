@@ -9,21 +9,20 @@ import 'package:jcn_delivery/src/pages/client/products/detail/client_products_de
 import 'package:jcn_delivery/src/provider/categories_provider.dart';
 import 'package:jcn_delivery/src/provider/products_provider.dart';
 import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
-import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class ClientProductsListController {
-  BuildContext context;
+  late BuildContext context;
   SharedPref _sharedPref = new SharedPref();
   GlobalKey<ScaffoldState> key = new GlobalKey<ScaffoldState>();
-  Function refresh;
-  User user;
+  late Function refresh;
+  User? user;
   CategoriesProvider _categoriesProvider = new CategoriesProvider();
   ProductsProvider _productsProvider = new ProductsProvider();
   List<Category> categories = [];
 
-  Timer searchOnStoppedTyping;
+  Timer? searchOnStoppedTyping;
 
   String productName = '';
   List<Product> selectedProducts = [];
@@ -36,8 +35,8 @@ class ClientProductsListController {
     this.context = context;
     this.refresh = refresh;
     user = User.fromJson(await _sharedPref.read('user'));
-    _categoriesProvider.init(context, user);
-    _productsProvider.init(context, user);
+    _categoriesProvider.init(context, user!);
+    _productsProvider.init(context, user!);
     selectedProducts = [];
     _sharedPref.save('order', selectedProducts);
 
@@ -50,7 +49,7 @@ class ClientProductsListController {
         milliseconds:
             800); // set the duration that you want call search() after that.
     if (searchOnStoppedTyping != null) {
-      searchOnStoppedTyping.cancel();
+      searchOnStoppedTyping!.cancel();
       refresh();
     }
 
@@ -74,6 +73,7 @@ class ClientProductsListController {
 
   void getCategories(String restaurantId) async {
     categories = await _categoriesProvider.getAll(restaurantId);
+    categories.sort(((a, b) => a.name!.compareTo(b.name!)));
     refresh();
   }
 
@@ -87,11 +87,11 @@ class ClientProductsListController {
   }
 
   void logout() {
-    _sharedPref.logout(context, user.id);
+    _sharedPref.logout(context, user!.id!);
   }
 
   void openDrawer() {
-    key.currentState.openDrawer();
+    key.currentState!.openDrawer();
   }
 
   void goToUpdatePage() {
@@ -117,38 +117,32 @@ class ClientProductsListController {
   }
 
   restaurantDistance(_distanceRC) {
-    if (_distanceRC / 1000 <= 2) {
+    if (_distanceRC / 1000 <= 1) {
+      return Text('0.99');
+    } else if (_distanceRC / 1000 <= 2) {
       return Text('0.99');
     } else if ((_distanceRC / 1000 > 2) && (_distanceRC / 1000 <= 3)) {
-      return Text('1.25');
-    } else if ((_distanceRC / 1000 > 3) && (_distanceRC / 1000 <= 4)) {
       return Text('1.49');
-    } else if ((_distanceRC / 1000 > 4) && (_distanceRC / 1000 <= 5)) {
-      return Text('1.75');
-    } else if ((_distanceRC / 1000 > 5) && (_distanceRC / 1000 <= 6)) {
+    } else if ((_distanceRC / 1000 > 3) && (_distanceRC / 1000 <= 4)) {
       return Text('1.99');
-    } else if ((_distanceRC / 1000 > 6) && (_distanceRC / 1000 <= 7)) {
-      return Text('2.25');
-    } else if ((_distanceRC / 1000 > 7) && (_distanceRC / 1000 <= 8)) {
+    } else if ((_distanceRC / 1000 > 4) && (_distanceRC / 1000 <= 5)) {
       return Text('2.49');
+    } else if ((_distanceRC / 1000 > 5) && (_distanceRC / 1000 <= 6)) {
+      return Text('3.25');
+    } else if ((_distanceRC / 1000 > 6) && (_distanceRC / 1000 <= 7)) {
+      return Text('3.69');
+    } else if ((_distanceRC / 1000 > 7) && (_distanceRC / 1000 <= 8)) {
+      return Text('4.10');
     } else if ((_distanceRC / 1000 > 8) && (_distanceRC / 1000 <= 9)) {
-      return Text('2.75');
-    } else if ((_distanceRC / 1000 > 9) && (_distanceRC / 1000 <= 10)) {
-      return Text('2.99');
-    } else if ((_distanceRC / 1000 > 10) && (_distanceRC / 1000 <= 11)) {
-      return Text('3.49');
-    } else if ((_distanceRC / 1000 > 11) && (_distanceRC / 1000 <= 12)) {
-      return Text('3.75');
-    } else if ((_distanceRC / 1000 > 12 && (_distanceRC / 1000 <= 13))) {
-      return Text('3.99');
-    } else if ((_distanceRC / 1000 > 13) && (_distanceRC / 1000 <= 14)) {
-      return Text('4.25');
-    } else if ((_distanceRC / 1000 > 14) && (_distanceRC / 1000 <= 15)) {
       return Text('4.49');
-    } else if ((_distanceRC / 1000 > 15) && (_distanceRC / 1000 <= 16)) {
-      return Text('4.75');
-    } else if ((_distanceRC / 1000 > 16) && (_distanceRC / 1000 <= 17)) {
+    } else if ((_distanceRC / 1000 > 9) && (_distanceRC / 1000 <= 10)) {
       return Text('4.99');
+    } else if ((_distanceRC / 1000 > 10) && (_distanceRC / 1000 <= 11)) {
+      return Text('5.25');
+    } else if ((_distanceRC / 1000 > 11) && (_distanceRC / 1000 <= 12)) {
+      return Text('5.99');
+    } else if ((_distanceRC / 1000 > 12 && (_distanceRC / 1000 <= 13))) {
+      return Text('6.25');
     } else {
       return Icon(Icons.credit_card);
     }

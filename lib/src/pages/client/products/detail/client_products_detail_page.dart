@@ -1,12 +1,12 @@
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcn_delivery/src/models/features.dart';
 import 'package:jcn_delivery/src/models/features/dropModel.dart';
 import 'package:jcn_delivery/src/models/features/sabores.dart';
 import 'package:jcn_delivery/src/models/product.dart';
-import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
 import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_page.dart';
 import 'package:jcn_delivery/src/pages/client/products/detail/client_products_detail_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
@@ -14,13 +14,14 @@ import 'package:flutter_image_slideshow/flutter_image_slideshow.dart';
 import 'dart:convert';
 
 import 'package:jcn_delivery/src/widgets/cart_row.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
 
 // ignore: must_be_immutable
 class ClientProductsDetailPage extends StatefulWidget {
-  Product product;
-  Product restaurant;
+  late Product product;
+  late Product? restaurant;
 
-  ClientProductsDetailPage({Key key, @required this.product, this.restaurant})
+  ClientProductsDetailPage({Key? key, required this.product, this.restaurant})
       : super(key: key);
 
   @override
@@ -34,7 +35,6 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
@@ -45,29 +45,29 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
   }
 
   _reloadWidget() {
-    Future.delayed(Duration(seconds: 2), () {
+    Future.delayed(Duration(seconds: 1), () {
       _con.init(context, refresh, widget.product);
+
       _reloadWidget();
     });
   }
 
-  String myValue;
+  String? myValue;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Container(
-          color: Colors.black,
+          color: Color.fromARGB(255, 7, 7, 7),
           height: MediaQuery.of(context).size.height * 1,
           child: ListView(
             children: [
-              _imageSlideshow(),
+              Hero(tag: 'productImage', child: _imageSlideshow()),
               _textName(),
               _standartDelivery(widget.product),
               _features(),
               //   _addOrRemoveItem(),
-              _buttonShoppingBag(),
             ],
           ),
         ),
@@ -84,11 +84,22 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
             },
             child: Row(
               children: [
-                Icon(Icons.shopping_cart_outlined, color: Colors.orange),
+                SizedBox(
+                  width: 10,
+                ),
+                BounceInDown(
+                    duration: Duration(seconds: 2),
+                    //     manualTrigger: true,
+                    child: Icon(Icons.shopping_cart_outlined,
+                        color: Colors.amber)),
+                SizedBox(
+                  width: 10,
+                ),
                 Container(
+                  padding: EdgeInsets.only(bottom: 2, left: 5, right: 5),
                   height: MediaQuery.of(context).size.height * 0.1,
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  color: Colors.black,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  color: Colors.transparent,
                   child: FadeIn(
                       child: CartRow(
                     selectedProducts: _con.selectedProducts,
@@ -97,184 +108,368 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
               ],
             ),
           ),
-        )
+        ),
+        Align(alignment: Alignment.bottomCenter, child: _buttonShoppingBag()),
       ],
     );
   }
 
   _features() {
     // _con.dropDownList.clear();
-
+    List<Features>? listFeatures;
+    ScrollController _controller0 = new ScrollController();
+    List<FeaturesSabores> firstFeature = [];
+    ScrollController _controller1 = new ScrollController();
+    List<FeaturesSabores> secondFeature = [];
+    ScrollController _controller2 = new ScrollController();
+    List<FeaturesSabores> thirdFeature = [];
+    ScrollController _controller3 = new ScrollController();
     try {
-      final data = json.decode(_con.product.features); // CATEGORIAS
-      Features features = Features.fromJson(data);
-      //  print(features.id);
-      FeaturesSabores dataSaboreas =
-          FeaturesSabores.fromJsonList(features.content);
+      final data = json.decode(_con.product!.features ?? '');
 
-      if (features.content != null && features.id != "dropbutton") {
-        if (dataSaboreas.toListFeaturesSabores != null) {
-          return Padding(
-            padding: EdgeInsets.only(left: 40, right: 40),
-            child: Column(
+      Features sfeatures = Features.fromJsonList(data['content']);
+
+      listFeatures = sfeatures.toListFeatures;
+      print(listFeatures.length);
+
+      try {
+        FeaturesSabores dataSabores =
+            FeaturesSabores.fromJsonList(listFeatures[0].content!);
+
+        firstFeature = dataSabores.toListFeaturesSabores;
+      } catch (e) {}
+
+      try {
+        FeaturesSabores dataSabores1 =
+            FeaturesSabores.fromJsonList2(listFeatures[1].content!);
+
+        secondFeature = dataSabores1.toListFeaturesSabores2;
+      } catch (e) {
+        print(e);
+      }
+      try {
+        FeaturesSabores dataSabores2 =
+            FeaturesSabores.fromJsonList2(listFeatures[2].content!);
+
+        thirdFeature = dataSabores2.toListFeaturesSabores2;
+      } catch (e) {
+        print(e);
+      }
+
+      return Container(
+          height: MediaQuery.of(context).size.height * 0.4,
+          child: RawScrollbar(
+            trackColor: Colors.grey,
+            thumbColor: Colors.amber,
+            thumbVisibility: true,
+            trackVisibility: true,
+            controller: _controller0,
+            child: ListView(
+              controller: _controller0,
               children: [
-                _dropDownWidget(dataSaboreas.toListFeaturesSabores, features)
+                Column(
+                  children: [
+                    firstFeature.length >= 1
+                        ? Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text(
+                              listFeatures[0].name! +
+                                  " (Max: ${listFeatures[0].max.toString()})",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : Container(),
+                    firstFeature.length >= 1
+                        ? Container(
+                            height: MediaQuery.of(context).size.height * 0.24,
+                            width: 300,
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 60, 60, 60),
+                                borderRadius: BorderRadius.circular(25)),
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              controller: _controller1,
+                              trackVisibility: true,
+                              child: ListView.builder(
+                                  controller: _controller1,
+                                  itemCount: firstFeature.length,
+                                  itemBuilder: (context, index) {
+                                    firstFeature.forEach((element) {
+                                      if (_con.dropDownList.contains(element)) {
+                                        //  print(_con.dropDownList.toList());
+                                      } else {
+                                        _con.dropDownList.add(DropModel(
+                                            name: element.name,
+                                            id: element.id,
+                                            description: element.description,
+                                            price: element.price,
+                                            data: element.necessary));
+                                      }
+                                    });
+
+                                    //  _con.dropDownList[0].name = sabores[0].name;
+
+                                    return CheckboxListTile(
+                                        //  selectedTileColor: Colors.orange,
+                                        checkColor: Colors.white,
+                                        enableFeedback: true,
+                                        activeColor: Colors.orange,
+                                        title: Text(
+                                          _con.dropDownList[index].name!,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        subtitle: Text(
+                                            _con.dropDownList[index].description
+                                                .toString(),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 2,
+                                            style:
+                                                TextStyle(color: Colors.white)),
+                                        value: _con.dropDownList[index].data,
+                                        onChanged: (boxNewvalue) {
+                                          if (boxNewvalue!) {
+                                            if (listFeatures![0].max! >
+                                                _con.valores.length) {
+                                              _con.dropDownList[index].data =
+                                                  boxNewvalue;
+                                              if (_con.dropDownList[index]
+                                                  .data = true) {
+                                                if (_con.valores.contains((_con
+                                                    .dropDownList[index]
+                                                    .name))) {
+                                                } else {
+                                                  _con.valores.add(_con
+                                                      .dropDownList[index]
+                                                      .name!);
+                                                }
+                                              } else if (_con
+                                                  .dropDownList[index]
+                                                  .data = false) {
+                                                _con.valores.remove(_con
+                                                    .dropDownList[index].name);
+                                              }
+                                            } else {
+                                              Fluttertoast.showToast(
+                                                  msg:
+                                                      'Máximo  ${listFeatures[0].max.toString()}');
+                                            }
+                                          } else {
+                                            try {
+                                              _con.dropDownList[index].data =
+                                                  boxNewvalue;
+                                              _con.valores.remove(_con
+                                                  .dropDownList[index].name);
+                                            } catch (e) {}
+                                          }
+                                          setState(() {});
+                                        });
+                                  }),
+                            ),
+                          )
+                        : Container(),
+                    secondFeature.length >= 2
+                        ? Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text(
+                              listFeatures[1].name! +
+                                  " (Max: ${listFeatures[1].max.toString()})",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : Container(),
+                    secondFeature.length >= 2
+                        ? Container(
+                            height: MediaQuery.of(context).size.height * 0.24,
+                            width: 300,
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 60, 60, 60),
+                                borderRadius: BorderRadius.circular(25)),
+                            child: Scrollbar(
+                              trackVisibility: true,
+                              controller: _controller2,
+                              thumbVisibility: true,
+                              child: ListView.builder(
+                                  controller: _controller2,
+                                  itemCount: secondFeature.length,
+                                  itemBuilder: (context, index) {
+                                    secondFeature.forEach((ele) {
+                                      if (!_con.supportList.contains(ele)) {
+                                        _con.supportList.add(ele);
+                                      } else {
+                                        print("Ya esta en la lista");
+                                      }
+                                    });
+
+                                    return CheckboxListTile(
+                                        title: Text(
+                                          _con.supportList[index].name!,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        subtitle: Text(
+                                          secondFeature[index].description!,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        value:
+                                            _con.supportList[index].necessary!,
+                                        onChanged: (val) {
+                                          print(_con.valores2.length);
+
+                                          if (val == true) {
+                                            if (listFeatures![1].max! >
+                                                _con.valores2.length) {
+                                              _con.valores2.add(
+                                                  "${_con.supportList[index].name! + _con.supportList[index].description!}");
+                                              _con.supportList[index]
+                                                  .necessary = val;
+                                            } else {
+                                              Fluttertoast.showToast(
+                                                  msg:
+                                                      'Máximo ${listFeatures[1].max}');
+                                            }
+                                          } else if (val == false) {
+                                            _con.valores2.remove(
+                                                "${_con.supportList[index].name! + _con.supportList[index].description!}");
+                                            _con.supportList[index].necessary =
+                                                val;
+                                          }
+
+                                          setState(() {});
+                                        });
+                                  }),
+                            ),
+                          )
+                        : Container(),
+                    thirdFeature.length >= 3
+                        ? Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text(
+                              listFeatures[2].name! +
+                                  " (Max: ${listFeatures[2].max.toString()})",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        : Container(),
+                    thirdFeature.length >= 3
+                        ? Container(
+                            height: MediaQuery.of(context).size.height * 0.24,
+                            width: 300,
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 60, 60, 60),
+                                borderRadius: BorderRadius.circular(25)),
+                            child: Scrollbar(
+                              controller: _controller3,
+                              trackVisibility: true,
+                              thumbVisibility: true,
+                              child: ListView.builder(
+                                  controller: _controller3,
+                                  itemCount: thirdFeature.length,
+                                  itemBuilder: (context, index) {
+                                    thirdFeature.forEach((ele) {
+                                      if (!_con.supportList1.contains(ele)) {
+                                        _con.supportList1.add(ele);
+                                      } else {
+                                        print("Ya esta en la lista");
+                                      }
+                                    });
+
+                                    return CheckboxListTile(
+                                        title: Text(
+                                          _con.supportList1[index].name!,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        subtitle: Text(
+                                          thirdFeature[index].description!,
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 2,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        value:
+                                            _con.supportList1[index].necessary!,
+                                        onChanged: (val) {
+                                          if (val == true) {
+                                            if (listFeatures![2].max! >
+                                                _con.valores3.length) {
+                                              _con.valores3.add(
+                                                  "${_con.supportList1[index].name! + _con.supportList1[index].description!}");
+                                              _con.supportList1[index]
+                                                  .necessary = val;
+                                            } else {
+                                              Fluttertoast.showToast(
+                                                  msg:
+                                                      'Máximo ${listFeatures[2].max}');
+                                            }
+                                          } else if (val == false) {
+                                            _con.valores3.remove(
+                                                "${_con.supportList1[index].name! + _con.supportList1[index].description!}");
+                                            _con.supportList1[index].necessary =
+                                                val;
+                                          }
+
+                                          setState(() {});
+                                        });
+                                  }),
+                            ),
+                          )
+                        : Container(),
+                  ],
+                )
               ],
             ),
-          );
-        } else {
-          Container();
-        }
-      } else if (features.id != "checkBox") {
-        if (dataSaboreas.toListFeaturesSabores != null) {
+          ));
+
+      //  print(data['content'][0]['content']);
+
+      //  return listFeatures;
+    } catch (e) {}
+
+    //  List<dynamic> dataList = jsonDecode(data.toString());
+
+    // CATEGORIAS
+    // final List<dynamic> features = jsonDecode(data);
+
+    return Text(
+      "",
+      style: TextStyle(color: Colors.white),
+    );
+    //  print(features.id);
+    //   FeaturesSabores dataSabores =
+    //       FeaturesSabores.fromJsonList(features.content!);
+/*
+      if (features.content != null) {
+        // ignore: unnecessary_null_comparison
+        if (dataSabores.toListFeaturesSabores != null) {
           return Padding(
             padding: EdgeInsets.only(left: 40, right: 40),
             child: Column(
               children: [
                 Text(
-                  features.name,
+                  features.name!,
                   style: TextStyle(color: Colors.white),
                 ),
-                _checkBoxWidget(dataSaboreas.toListFeaturesSabores)
+                Text('Máximo: ' + features.max.toString(),
+                    style: TextStyle(color: Colors.white, fontSize: 12)),
+
+                //  _dropDownWidget(dataSaboreas.toListFeaturesSabores, features),
+                _checkBoxWidget(dataSabores.toListFeaturesSabores, features)
               ],
             ),
           );
         } else {
           Container();
         }
-        //  return Text("---");
-      }
+      }*/
 
-      return Text("---");
-
-      /*   return lista != null
+    /*   return lista != null
         ? Text(lista[0]["0"][0]["prop1"].toString())
         : Text("No hay datos");*/
-
-    } catch (e) {
-      return Container();
-    }
-  }
-
-  _checkBoxWidget(List<FeaturesSabores> sabores) {
-    var items = sabores.map((element) {
-      return DropdownMenuItem(value: element.name, child: Text(element.name));
-    }).toList();
-    //print(items.toString());
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
-      width: 400,
-      color: Colors.black,
-      child: ListView.builder(
-          itemCount: sabores.length,
-          itemBuilder: (context, index) {
-            sabores.forEach((element) {
-              if (_con.dropDownList.contains(element)) {
-                //  print(_con.dropDownList.toList());
-              } else {
-                _con.dropDownList.add(DropModel(
-                    name: element.name,
-                    id: element.id,
-                    price: element.price,
-                    data: element.necessary));
-              }
-            });
-
-            //  _con.dropDownList[0].name = sabores[0].name;
-            bool initialValue = sabores[0].necessary;
-            return CheckboxListTile(
-                //  selectedTileColor: Colors.orange,
-                checkColor: Colors.white,
-                activeColor: Colors.orange,
-                title: Text(
-                  _con.dropDownList[index].name,
-                  style: TextStyle(color: Colors.white),
-                ),
-                subtitle: Text(_con.dropDownList[index].price.toString(),
-                    style: TextStyle(color: Colors.white)),
-                value: _con.dropDownList[index].data,
-                onChanged: (boxNewvalue) {
-                  //          _con.dropValue(
-                  //              index, boxNewvalue, _con.dropDownList[index].id);
-                });
-          }),
-    );
-  }
-
-  _dropDownWidget(List<FeaturesSabores> sabores, features) {
-    //String initialValue = "as";
-    var items = sabores.map((element) {
-      return DropdownMenuItem(value: element.name, child: Text(element.name));
-    }).toList();
-    // print(items.toString());
-    sabores.forEach((element) {
-      if (_con.dropDownList.contains(element)) {
-        //   print(_con.dropDownList.toList());
-      } else {
-        _con.dropDownList.add(DropModel(
-            name: element.name,
-            id: _con.counter.toString(),
-            price: element.price,
-            data: element.necessary));
-      }
-    });
-
-    return _columnDropList(sabores, features, items);
-
-    /*  if (sabores.length == 0) {
-      return _dropDown(sabores, _con.dropDownValue, sabores.length);
-    } else if (sabores.length == 1) {
-    } */
-  }
-
-  Widget _columnDropList(
-      List<FeaturesSabores> sabores, Features features, items) {
-    return Column(
-      children: [
-        Text(
-          features.name,
-          style: TextStyle(color: Colors.white),
-        ),
-        Container(
-          height: 50 * features.max.toDouble(),
-          width: MediaQuery.of(context).size.width * 0.8,
-          child: ListView.builder(
-              itemCount: features.max,
-              itemBuilder: (context, index) {
-                _con.dropDownList.add(DropModel(
-                    id: sabores[index].id,
-                    name: sabores[index].name,
-                    price: sabores[index].price,
-                    data: false));
-                //  _con.dropDownList[0].name = sabores[0].name;
-                String initialValue = sabores[0].name;
-                return ListTile(
-                  title: Text(sabores[index].id,
-                      style: TextStyle(color: Colors.white)),
-                  trailing: DropdownButton(
-
-                      //   key: Key(id),
-                      icon: Icon(Icons.add_outlined),
-                      value: _con.dropDownList[index].name ?? initialValue,
-                      style: TextStyle(color: Colors.green),
-                      onChanged: (newValue) {
-                        _con.valores
-                            .indexWhere((element) => element != newValue);
-                        _con.valores.add(newValue);
-
-                        //  print(myValue);
-                        _con.dropValue(
-                            index, newValue, _con.dropDownList[index].id);
-                        //     _con.dropValue(initialValue, newValue, index, false, false);
-                        //    _con.dropValue(value, newValue, cantidad);
-                      },
-                      items: items),
-                );
-              }),
-        ),
-      ],
-    );
   }
 
   Widget _textName() {
@@ -282,8 +477,8 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
     //_con.product.features.substring(start)
 
     return Container(
+      padding: EdgeInsets.only(top: 5, left: 15),
       alignment: Alignment.centerLeft,
-      margin: EdgeInsets.only(right: 30, left: 30, top: 30),
       child: Text(
         _con.product?.name ?? '',
         maxLines: 3,
@@ -298,7 +493,13 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
 
   Widget _buttonShoppingBag() {
     return Container(
-      margin: EdgeInsets.only(left: 30, right: 30, top: 30, bottom: 30),
+      height: MediaQuery.of(context).size.height * 0.07,
+      width: MediaQuery.of(context).size.width * 0.7,
+      margin: EdgeInsets.only(
+          left: 30,
+          right: 30,
+          top: 10,
+          bottom: MediaQuery.of(context).size.height * 0.09),
       child: ElevatedButton(
         onPressed: () {
           _con.addToBag();
@@ -343,8 +544,10 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
 
   Widget _standartDelivery(Product product) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+      height: MediaQuery.of(context).size.height * 0.07,
+      width: MediaQuery.of(context).size.width * 0.5,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.flatware,
@@ -352,109 +555,38 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
             color: Colors.grey,
           ),
           SizedBox(width: 7),
-          Text(
-            _con.product?.description ?? '',
-            style: TextStyle(fontSize: 13, color: Colors.white60),
+          Container(
+            width: MediaQuery.of(context).size.width * 0.7,
+            child: Text(
+              _con.product?.description ?? '',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Colors.white60),
+            ),
           ),
         ],
       ),
     );
   }
 
-/*  Widget _addOrRemoveItem() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 17),
-      child: Row(
-        children: [
-          IconButton(
-              onPressed: _con.removeItem,
-              icon: Icon(
-                Icons.remove_circle_outline,
-                color: Colors.white,
-                size: 30,
-              )),
-          Text(
-            '${_con.counter}',
-            style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
-          IconButton(
-              onPressed: _con.addItem,
-              icon: Icon(
-                Icons.add_circle_outline,
-                color: Colors.white,
-                size: 30,
-              )),
-          Spacer(),
-          Container(
-            margin: EdgeInsets.only(right: 10),
-            child: FadeIn(
-              child: Text(
-                '${_con.productPrice?.toStringAsFixed(2) ?? 0}\$',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }*/
-
   Widget _imageSlideshow() {
     return SafeArea(
       child: Stack(
         children: [
-          ImageSlideshow(
+          Container(
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.3,
-            initialPage: 0,
-            isLoop: true,
-            autoPlayInterval: 6000,
-            indicatorColor: MyColors.primaryColor,
-            indicatorBackgroundColor: Colors.grey,
-            children: [
-              FadeIn(
-                duration: Duration(milliseconds: 1500),
-                child: FadeInImage(
-                  //    fadeOutCurve: Curves.bounceIn,
-                  //    fadeOutDuration: Duration(seconds: 1),
-                  image: _con.product?.image1 != null
-                      ? NetworkImage(_con.product.image1)
-                      : AssetImage('assets/img/no-image.png'),
-                  fit: BoxFit.cover,
-                  fadeInDuration: Duration(milliseconds: 50),
-                  placeholder: AssetImage('assets/img/no-image.png'),
-                ),
+            height: MediaQuery.of(context).size.height * 0.25,
+            child: CachedNetworkImage(
+              imageUrl: _con.product!.image1!,
+              placeholder: (context, url) => Shimmer(
+                  child: Container(
+                color: Colors.black,
+              )),
+              imageBuilder: (context, image) => Image(
+                image: image,
+                fit: BoxFit.fill,
               ),
-              FadeIn(
-                duration: Duration(milliseconds: 1500),
-                child: FadeInImage(
-                  image: _con.product?.image2 != null
-                      ? NetworkImage(_con.product.image2)
-                      : AssetImage('assets/img/no-image.png'),
-                  fit: BoxFit.cover,
-                  fadeInDuration: Duration(milliseconds: 50),
-                  placeholder: AssetImage('assets/img/no-image.png'),
-                ),
-              ),
-              FadeIn(
-                duration: Duration(milliseconds: 1500),
-                child: FadeInImage(
-                  image: _con.product?.image3 != null
-                      ? NetworkImage(_con.product.image3)
-                      : AssetImage('assets/img/no-image.png'),
-                  fit: BoxFit.cover,
-                  fadeInDuration: Duration(milliseconds: 50),
-                  placeholder: AssetImage('assets/img/no-image.png'),
-                ),
-              ),
-            ],
-            onPageChanged: (value) {
-              //   print('Page changed: $value');
-            },
+            ),
           ),
           FadeIn(
               child: IconButton(
@@ -479,6 +611,11 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void refresh() {

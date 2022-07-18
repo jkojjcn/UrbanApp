@@ -1,14 +1,12 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_controller.dart';
 import 'package:jcn_delivery/src/pages/client/address/map/client_address_map_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
-import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class ClientAddressMapPage extends StatefulWidget {
-  const ClientAddressMapPage({Key key}) : super(key: key);
+  const ClientAddressMapPage({Key? key}) : super(key: key);
 
   @override
   _ClientAddressMapPageState createState() => _ClientAddressMapPageState();
@@ -19,7 +17,6 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh);
@@ -77,6 +74,30 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
           Container(
             alignment: Alignment.bottomCenter,
             child: _buttonAccept(),
+          ),
+          Align(
+            alignment: Alignment.topRight,
+            child: FloatingActionButton(
+                backgroundColor: Colors.orange,
+                mini: true,
+                onPressed: () {
+                  _con.updateLocation();
+                },
+                child: Stack(
+                  children: [
+                    Icon(
+                      Icons.place_outlined,
+                      size: 25,
+                    ),
+                    Positioned(
+                        left: 15,
+                        child: Icon(
+                          Icons.search,
+                          size: 10,
+                          color: Colors.black,
+                        ))
+                  ],
+                )),
           )
         ],
       ),
@@ -118,10 +139,11 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
 
   Widget _iconMyLocation() {
     return Image.asset(
-      'assets/iconApp/20.png',
+      'assets/iconApp/flagv1.png',
       width: 65,
       height: 65,
-      color: Colors.orange,
+
+      // color: Colors.orange.withOpacity(0.5),
     );
   }
 
@@ -130,7 +152,7 @@ class _ClientAddressMapPageState extends State<ClientAddressMapPage> {
       mapType: MapType.normal,
       initialCameraPosition: _con.initialPosition,
       onMapCreated: _con.onMapCreated,
-      myLocationButtonEnabled: true,
+      myLocationButtonEnabled: false,
       myLocationEnabled: true,
       onCameraMove: (position) {
         _con.initialPosition = position;

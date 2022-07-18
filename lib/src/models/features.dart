@@ -7,14 +7,15 @@ Features productFromJson(String str) => Features.fromJson(json.decode(str));
 String productToJson(Features data) => json.encode(data.toJson());
 
 class Features {
-  String id;
-  String name;
-  String description;
-  int max;
-  int min;
-  List<dynamic> content;
+  String? id;
+  String? name;
+  String? description;
+  int? max;
+  int? min;
+  List<dynamic>? content;
 
   List<Features> toListFeatures = [];
+  List<FeaturesSabores> toListFeaturesSabores = [];
 
   Features(
       {this.id, this.name, this.description, this.content, this.max, this.min});
@@ -28,6 +29,7 @@ class Features {
       min: json["min"]);
 
   Features.fromJsonList(List<dynamic> json) {
+    // ignore: unnecessary_null_comparison
     if (json == null) return;
     json.forEach((item) {
       Features features = Features.fromJson(item);

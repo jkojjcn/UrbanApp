@@ -1,14 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_controller.dart';
-import 'package:jcn_delivery/src/pages/client/address/map/client_address_map_controller.dart';
+import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/pages/delivery/orders/map/delivery_orders_map_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
-import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+// ignore: must_be_immutable
 class DeliveryOrdersMapPage extends StatefulWidget {
-  const DeliveryOrdersMapPage({Key key}) : super(key: key);
+  Order? order;
+  DeliveryOrdersMapPage({Key? key, this.order}) : super(key: key);
 
   @override
   _DeliveryOrdersMapPageState createState() => _DeliveryOrdersMapPageState();
@@ -19,16 +22,14 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-      _con.init(context, refresh);
+      _con.init(context, refresh, widget.order!);
     });
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     _con.dispose();
   }
@@ -59,7 +60,7 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
 
   Widget _cardOrderInfo() {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: MediaQuery.of(context).size.height * 0.38,
       width: double.infinity,
       decoration: BoxDecoration(
           color: Colors.white,
@@ -74,56 +75,83 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
                 blurRadius: 7,
                 offset: Offset(0, 3))
           ]),
-      child: Column(
-        children: [
-          _listTileAddress(
-              _con.order?.address?.neighborhood, 'Barrio', Icons.my_location),
-          _listTileAddress(
-              _con.order?.address?.address, 'Direccion', Icons.location_on),
-          Divider(
-            color: Colors.grey[400],
-            endIndent: 30,
-            indent: 30,
-          ),
-          _clientInfo(),
-          _buttonNext()
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Text(
+              '${widget.order?.totalCliente?.toStringAsFixed(2)} \$',
+              style: TextStyle(fontSize: 25, color: Colors.green),
+            ),
+            _listTileAddress(widget.order?.address.neighborhood ?? "..",
+                'Barrio', Icons.my_location),
+            _listTileAddress(widget.order?.address.address ?? "..", 'Direccion',
+                Icons.location_on),
+            Divider(
+              color: Colors.grey[400],
+              endIndent: 30,
+              indent: 30,
+            ),
+            _clientInfo(),
+            _buttonNext(),
+            SizedBox(
+              height: 50,
+            )
+          ],
+        ),
       ),
     );
   }
 
   Widget _clientInfo() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 35, vertical: 20),
+      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
       child: Row(
         children: [
           Container(
             height: 50,
             width: 50,
             child: FadeInImage(
-              image: _con.order?.client?.image != null
-                  ? NetworkImage(_con.order.client?.image)
-                  : AssetImage('assets/img/no-image.png'),
+              image: NetworkImage(widget.order?.client.image ?? ""),
               fit: BoxFit.cover,
               fadeInDuration: Duration(milliseconds: 50),
               placeholder: AssetImage('assets/img/no-image.png'),
             ),
           ),
-          Container(
-            margin: EdgeInsets.only(left: 10),
-            child: Text(
-              '${_con.order?.client?.name ?? ''} ${_con.order?.client?.lastname ?? ''}',
-              style: TextStyle(color: Colors.black, fontSize: 16),
-              maxLines: 1,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.33,
+              margin: EdgeInsets.only(left: 10),
+              child: Text(
+                '${widget.order?.client.name ?? ''} ${widget.order?.client.lastname ?? ''}',
+                style: TextStyle(color: Colors.black, fontSize: 16),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
           Spacer(),
+          Container(
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  color: Colors.grey[200]),
+              child: TextButton(
+                onPressed: () {
+                  openwhatsapp(widget.order?.client.phone ?? "");
+                },
+                child: Text('WhatsApp'),
+              )),
+          SizedBox(
+            width: 15,
+          ),
           Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(Radius.circular(15)),
                 color: Colors.grey[200]),
             child: IconButton(
-              onPressed: _con.call,
+              onPressed: () {
+                openTelf(widget.order?.client.phone ?? "");
+              },
               icon: Icon(
                 Icons.phone,
                 color: Colors.black,
@@ -133,6 +161,59 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
         ],
       ),
     );
+  }
+
+  openTelf(String number) async {
+    var whatsappURlAndroid = "tel://$number";
+    var whatappURLIos = "tel://$number";
+    if (Platform.isIOS) {
+      // for iOS phone only
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatappURLIos)) {
+        // ignore: deprecated_member_use
+        await launch(whatappURLIos, forceSafariVC: false);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    } else {
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatsappURlAndroid)) {
+        // ignore: deprecated_member_use
+        await launch(whatsappURlAndroid);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    }
+  }
+
+  openwhatsapp(String number) async {
+    var whatsapp = number;
+    var whatsappURlAndroid =
+        "whatsapp://send?phone=" + "+593" + number + "&text=hello";
+    var whatappURLI = "https://wa.me/$whatsapp?text=${Uri.parse("hello")}";
+    if (Platform.isIOS) {
+      // for iOS phone only
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatappURLI)) {
+        // ignore: deprecated_member_use
+        await launch(whatappURLI, forceSafariVC: false);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    } else {
+      // android , web
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatsappURlAndroid)) {
+        // ignore: deprecated_member_use
+        await launch(whatsappURlAndroid);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    }
   }
 
   Widget _iconGoogleMaps() {
@@ -162,7 +243,7 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
       margin: EdgeInsets.symmetric(horizontal: 30),
       child: ListTile(
         title: Text(
-          title ?? '',
+          title,
           style: TextStyle(fontSize: 13),
         ),
         subtitle: Text(subtitle),

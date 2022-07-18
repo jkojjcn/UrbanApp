@@ -14,24 +14,25 @@ class Address {
     this.lng,
   });
 
-  String id;
-  String idUser;
-  String address;
-  String neighborhood;
-  double lat;
-  double lng;
+  String? id;
+  String? idUser;
+  String? address;
+  String? neighborhood;
+  double? lat;
+  double? lng;
   List<Address> toList = [];
 
   factory Address.fromJson(Map<String, dynamic> json) => Address(
-    id: json["id"] is int ? json['id'].toString() : json['id'],
-    idUser: json["id_user"],
-    address: json["address"],
-    neighborhood: json["neighborhood"],
-    lat: json["lat"] is String ? double.parse(json["lat"]) : json["lat"],
-    lng: json["lng"] is String ? double.parse(json["lng"]) : json["lng"],
-  );
+        id: json["id"] is int ? json['id'].toString() : json['id'],
+        idUser: json["id_user"],
+        address: json["address"],
+        neighborhood: json["neighborhood"],
+        lat: json["lat"] is String ? double.parse(json["lat"]) : json["lat"],
+        lng: json["lng"] is String ? double.parse(json["lng"]) : json["lng"],
+      );
 
   Address.fromJsonList(List<dynamic> jsonList) {
+    // ignore: unnecessary_null_comparison
     if (jsonList == null) return;
     jsonList.forEach((item) {
       Address address = Address.fromJson(item);
@@ -40,11 +41,11 @@ class Address {
   }
 
   Map<String, dynamic> toJson() => {
-    "id": id,
-    "id_user": idUser,
-    "address": address,
-    "neighborhood": neighborhood,
-    "lat": lat,
-    "lng": lng,
-  };
+        "id": id,
+        "id_user": idUser,
+        "address": address,
+        "neighborhood": neighborhood,
+        "lat": lat,
+        "lng": lng,
+      };
 }

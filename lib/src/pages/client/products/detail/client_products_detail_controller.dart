@@ -1,41 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:jcn_delivery/src/models/features/dropModel.dart';
+import 'package:jcn_delivery/src/models/features/sabores.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class ClientProductsDetailController {
-  BuildContext context;
-  Function refresh;
+  late BuildContext context;
+  late Function refresh;
 
-  Product product;
+  Product? product;
 
   int counter = 1;
-  double productPrice;
-  String sabor;
+  double? productPrice;
+  String? sabor;
+  List<FeaturesSabores> supportList = [];
+  List<FeaturesSabores> supportList1 = [];
   List<String> valores = [];
-
+  List<String> valores2 = [];
+  List<String> valores3 = [];
   List<DropModel> dropDownList = <DropModel>[
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
-    DropModel(id: '', name: '', price: 0.0, data: false),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+  ];
+
+  List<DropModel> dropDownList2 = <DropModel>[
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
+    DropModel(id: '', name: '', price: 0.0, data: false, description: ''),
   ];
   // List<D> checkList = <CheckModel>[];
 
@@ -53,10 +80,6 @@ class ClientProductsDetailController {
     selectedProducts =
         Product.fromJsonList(await _sharedPref.read('order')).toList;
 
-    selectedProducts.forEach((p) {
-      // print('Producto seleccionado: ${p.toJson()}');
-    });
-
     refresh();
   }
 
@@ -66,13 +89,15 @@ class ClientProductsDetailController {
     //  dropDownList.add(findex);
 
     // PRODUCTOS SELECCIONADOS NO EXISTE ESE PRODUCTO
-    if (product.quantity == null) {
-      product.quantity = 1;
+    if (product!.quantity == null) {
+      product!.quantity = 1;
     }
-    product.sabores = valores.toString();
+    product!.sabores = (valores.length == 0 ? '' : valores.toString()) +
+        (valores2.length == 0 ? '' : valores2.toString()) +
+        (valores3.length == 0 ? '' : valores3.toString());
     //  product.sabores = sabor;
 
-    selectedProducts.add(product);
+    selectedProducts.add(product!);
 
     _sharedPref.save('order', selectedProducts);
     _sharedPref.remove('features');
@@ -80,6 +105,10 @@ class ClientProductsDetailController {
     //  print(checkList.toString());
     Fluttertoast.showToast(msg: 'Producto agregado');
     valores = [];
+    valores2 = [];
+    valores3 = [];
+    supportList = [];
+    dropDownList.forEach((element) => element.data = false);
     refresh();
   }
 
@@ -100,16 +129,16 @@ class ClientProductsDetailController {
 
   void addItem() {
     counter = counter + 1;
-    productPrice = product.price * counter;
-    product.quantity = counter;
+    productPrice = product!.price! * counter;
+    product!.quantity = counter;
     refresh();
   }
 
   void removeItem() {
     if (counter > 1) {
       counter = counter - 1;
-      productPrice = product.price * counter;
-      product.quantity = counter;
+      productPrice = product!.price! * counter;
+      product!.quantity = counter;
       refresh();
     }
   }

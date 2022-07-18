@@ -7,17 +7,20 @@ User userFromJson(String str) => User.fromJson(json.decode(str));
 String userToJson(User data) => json.encode(data.toJson());
 
 class User {
-  String id;
-  String name;
-  String lastname;
-  String email;
-  String phone;
-  String password;
-  String sessionToken;
-  String notificationToken;
-  String image;
-  List<Rol> roles = [];
+  String? id;
+  String? name;
+  String? lastname;
+  String? email;
+  String? phone;
+  String? password;
+  String? sessionToken;
+  String? notificationToken;
+  String? image;
+  List<Rol>? roles = [];
   List<User> toList = [];
+
+  //MESSAGES
+  
 
   User(
       {this.id,
@@ -28,7 +31,7 @@ class User {
       this.password,
       this.sessionToken,
       this.notificationToken,
-      this.image,
+     this.image,
       this.roles});
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -44,11 +47,11 @@ class User {
         roles: json["roles"] == null
             ? []
             : List<Rol>.from(
-                    json['roles'].map((model) => Rol.fromJson(model))) ??
-                [],
+                    json['roles'].map((model) => Rol.fromJson(model))),
       );
 
   User.fromJsonList(List<dynamic> jsonList) {
+    // ignore: unnecessary_null_comparison
     if (jsonList == null) return;
     jsonList.forEach((item) {
       User user = User.fromJson(item);

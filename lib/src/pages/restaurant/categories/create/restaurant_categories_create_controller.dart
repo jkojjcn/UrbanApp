@@ -7,14 +7,14 @@ import 'package:jcn_delivery/src/utils/my_snackbar.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
 class RestaurantCategoriesCreateController {
-  BuildContext context;
-  Function refresh;
+ late BuildContext context;
+ late Function refresh;
 
   TextEditingController nameController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
 
   CategoriesProvider _categoriesProvider = new CategoriesProvider();
-  User user;
+ late User user;
   SharedPref sharedPref = new SharedPref();
 
   Future init(BuildContext context, Function refresh) async {
@@ -37,9 +37,9 @@ class RestaurantCategoriesCreateController {
 
     ResponseApi responseApi = await _categoriesProvider.create(category);
 
-    MySnackbar.show(context, responseApi.message);
+    MySnackbar.show(context, responseApi.message!);
 
-    if (responseApi.success) {
+    if (responseApi.success!) {
       nameController.text = '';
       descriptionController.text = '';
     }
