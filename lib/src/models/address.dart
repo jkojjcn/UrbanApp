@@ -12,6 +12,7 @@ class Address {
     this.neighborhood,
     this.lat,
     this.lng,
+    this.distanceBetwen,
   });
 
   String? id;
@@ -20,16 +21,17 @@ class Address {
   String? neighborhood;
   double? lat;
   double? lng;
+  double? distanceBetwen;
   List<Address> toList = [];
 
   factory Address.fromJson(Map<String, dynamic> json) => Address(
-        id: json["id"] is int ? json['id'].toString() : json['id'],
-        idUser: json["id_user"],
-        address: json["address"],
-        neighborhood: json["neighborhood"],
-        lat: json["lat"] is String ? double.parse(json["lat"]) : json["lat"],
-        lng: json["lng"] is String ? double.parse(json["lng"]) : json["lng"],
-      );
+      id: json["id"] is int ? json['id'].toString() : json['id'],
+      idUser: json["id_user"],
+      address: json["address"],
+      neighborhood: json["neighborhood"],
+      lat: json["lat"] is String ? double.parse(json["lat"]) : json["lat"],
+      lng: json["lng"] is String ? double.parse(json["lng"]) : json["lng"],
+      distanceBetwen: json['distanceBetwen']);
 
   Address.fromJsonList(List<dynamic> jsonList) {
     // ignore: unnecessary_null_comparison
@@ -47,5 +49,6 @@ class Address {
         "neighborhood": neighborhood,
         "lat": lat,
         "lng": lng,
+        "distanceBetwen": distanceBetwen
       };
 }

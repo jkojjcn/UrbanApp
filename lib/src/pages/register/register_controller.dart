@@ -1,148 +1,66 @@
+import 'dart:developer';
 import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
 import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:jcn_delivery/src/utils/my_snackbar.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:sn_progress_dialog/progress_dialog.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
 
-class RegisterController {
+class RegisterController extends GetxController {
   late BuildContext context;
   TextEditingController emailController = new TextEditingController();
   TextEditingController nameController = new TextEditingController();
-  TextEditingController lastnameController = new TextEditingController();
-  TextEditingController phoneController = new TextEditingController();
-  TextEditingController passwordController = new TextEditingController();
-  TextEditingController confirmPassswordController =
-      new TextEditingController();
+  GeneralActions generalActions = Get.put(GeneralActions());
 
-  UsersProvider usersProvider = new UsersProvider();
+  ImagePicker picker = ImagePicker();
+
+  File? imageFile;
+  File? appFile;
+
+  UsersProvider usersProvider = UsersProvider();
+
   PushNotificationsProvider pushNotificationsProvider =
       new PushNotificationsProvider();
-  PickedFile? pickedFile;
-  File? imageFile;
-  Function? refresh;
-
-  ProgressDialog? _progressDialog;
 
   bool isEnable = true;
 
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
-    this.refresh = refresh;
-    usersProvider.init(context);
-    _progressDialog = ProgressDialog(context: context);
-  }
-
-  void register() async {
-    String email = emailController.text.toLowerCase().trim();
-    String name = nameController.text;
-    String lastname = lastnameController.text;
-    String phone = phoneController.text.trim();
-    String password = passwordController.text.trim();
-    String confirmPassword = confirmPassswordController.text.trim();
-
-    if (email.isEmpty ||
-        name.isEmpty ||
-        phone.isEmpty ||
-        password.isEmpty ||
-        confirmPassword.isEmpty) {
-      MySnackbar.show(context, 'Debes ingresar todos los campos');
-      return;
-    }
-
-    if (confirmPassword != password) {
-      MySnackbar.show(context, 'Las contraseñas no coinciden');
-      return;
-    }
-
-    if (password.length < 6) {
-      MySnackbar.show(
-          context, 'Las contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-
-    _progressDialog?.show(max: 100, msg: 'Espere un momento...');
-    isEnable = false;
-
-    User user = new User(
-        image: "",
-        email: email,
-        name: name,
-        lastname: lastname,
-        phone: phone,
-        password: password);
-
-    Stream stream = await usersProvider.createWithImage(user);
-    stream.listen((res) async {
-      _progressDialog?.close();
-
-      // ResponseApi responseApi = await usersProvider.create(user);
-      ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
-      print('RESPUESTA: ${responseApi.toJson()}');
-
-      if (responseApi.success!) {
-        MySnackbar.show(context, responseApi.message!);
-        Future.delayed(Duration(seconds: 3), () {
-          Navigator.pushReplacementNamed(context, 'login');
-        });
-
-        /*  Future.delayed(Duration(seconds: 2), () {
-          usersProvider.login(email, password);
-          Future.delayed(Duration(seconds: 2), () {
-            if (responseApi.success) {
-              User user = User.fromJson(responseApi.data);
-              _sharedPref.save('user', user.toJson());
-
-              pushNotificationsProvider.saveToken(user.id);
-
-              print('USUARIO LOGEADO: ${user.toJson()}');
-              if (user.roles.length > 1) {
-                Navigator.pushNamedAndRemoveUntil(
-                    context, 'roles', (route) => false);
-              } else {
-                Navigator.pushNamedAndRemoveUntil(
-                    context, user.roles[0].route, (route) => false);
-              }
-            } else {
-              MySnackbar.show(context, responseApi.message);
-            }
-          });
-        });
-           */
-      } else {
-        isEnable = true;
-        MySnackbar.show(context, 'Error: Correo o número ya registrado.');
-      }
-    });
   }
 
   Future selectImage(ImageSource imageSource) async {
-    // ignore: deprecated_member_use
-    pickedFile = await ImagePicker().getImage(source: imageSource);
-    if (pickedFile != null) {
-      // imageFile = File(pickedFile.path);
+    final XFile? image = await picker.pickImage(source: imageSource);
+
+    if (image != null) {
+      imageFile = File(image.path);
+      update();
     }
-    Navigator.pop(context);
-    refresh!();
   }
 
-  void showAlertDialog() {
+  void showAlertDialog(context) async {
     Widget galleryButton = ElevatedButton(
         onPressed: () {
+          Get.back();
           selectImage(ImageSource.gallery);
         },
-        child: Text('GALERIA'));
-
+        child: Text('Galería'));
     Widget cameraButton = ElevatedButton(
         onPressed: () {
+          Get.back();
           selectImage(ImageSource.camera);
         },
-        child: Text('CAMARA'));
+        child: Text('Cámara'));
 
     AlertDialog alertDialog = AlertDialog(
       title: Text('Selecciona tu imagen'),
@@ -156,7 +74,66 @@ class RegisterController {
         });
   }
 
-  void back() {
-    Navigator.pop(context);
+  void register(BuildContext context) async {
+    String email = emailController.text.toLowerCase().trim();
+    String name = nameController.text;
+
+    if (email.isEmpty || name.isEmpty) {
+      MySnackbar.show(context, 'Debes ingresar todos los campos');
+      return;
+    }
+
+    ProgressDialog progressDialog = ProgressDialog(context: context);
+    progressDialog.show(max: 100, msg: 'Registrando Datos...');
+
+    // isEnable = false;
+
+    User user = new User(
+        email: email,
+        name: name,
+        lastname: '',
+        phone: generalActions.userUid.value.phone,
+        password: generalActions.userUid.value.password);
+
+    Stream stream = await usersProvider.createWithImagePhone(user, {imageFile});
+    stream.listen((res) {
+      ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
+      progressDialog.close();
+      if (responseApi.success == true) {
+        log(responseApi.data.toString());
+        User user = User.fromJson(responseApi.data);
+
+        Get.snackbar('Perfecto!', 'Iniciaremos tu sesión',
+            duration: Duration(seconds: 5), backgroundColor: Colors.white);
+
+        loginPhone(generalActions.userUid.value.password!,
+            generalActions.userUid.value.phone!);
+
+        //  Navigator.pop(context);
+
+        //   log('Try to register with image');
+      } else if (responseApi.success == false) {
+        Get.snackbar('Error', 'Ese correo/número ya se ha registrado',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        //    isEnable = true;
+
+      }
+    });
+  }
+
+  void loginPhone(String userUid, String phone) async {
+    ResponseApi responseApi = await usersProvider.loginPhone(userUid, phone);
+    if (responseApi.success == true) {
+      User us = User.fromJson(responseApi.data);
+      GetStorage().write('user', us.toJson());
+      Get.snackbar('${us.name}', 'Hemos preparado lo mejor para ti',
+          backgroundColor: Colors.black, colorText: Colors.white);
+      Get.toNamed('/roles');
+      dynamic currentUserData = await GetStorage().read('user');
+      log(currentUserData.toString());
+    } else {
+      Get.toNamed('/register');
+      //    Get.snackbar('Error', 'No se ha iniciado sesión');
+    }
   }
 }

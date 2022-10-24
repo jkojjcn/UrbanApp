@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/models/category.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
@@ -12,7 +13,6 @@ import 'package:jcn_delivery/src/provider/products_provider.dart';
 import 'package:jcn_delivery/src/utils/my_snackbar.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sn_progress_dialog/sn_progress_dialog.dart';
 
 class RestaurantProductsCreateController {
   late BuildContext context;
@@ -20,14 +20,13 @@ class RestaurantProductsCreateController {
 
   TextEditingController nameController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
+  TextEditingController establecimientoController = new TextEditingController();
   MoneyMaskedTextController priceController = new MoneyMaskedTextController();
 
   CategoriesProvider _categoriesProvider = new CategoriesProvider();
   ProductsProvider _productsProvider = new ProductsProvider();
 
   late User user;
-  SharedPref sharedPref = new SharedPref();
-
   List<Category> categories = [];
   late String idCategory;
 
@@ -37,13 +36,11 @@ class RestaurantProductsCreateController {
   File? imageFile2;
   File? imageFile3;
 
-  late ProgressDialog _progressDialog;
-
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
     this.refresh = refresh;
-    _progressDialog = new ProgressDialog(context: context);
-    user = User.fromJson(await sharedPref.read('user'));
+
+    user = User.fromJson(GetStorage().read('user'));
     _categoriesProvider.init(context, user);
     _productsProvider.init(context, user);
     getCategories({});
@@ -57,21 +54,19 @@ class RestaurantProductsCreateController {
   void createProduct() async {
     String name = nameController.text;
     String description = descriptionController.text;
+    String establecimiento = establecimientoController.text;
     double price = priceController.numberValue;
 
-    if (name.isEmpty || description.isEmpty || price == 0) {
+    if (name.isEmpty ||
+        description.isEmpty ||
+        price == 0 ||
+        establecimiento.isEmpty) {
       MySnackbar.show(context, 'Debe ingresar todos los campos');
       return;
     }
 
-    if (imageFile1 == null || imageFile2 == null || imageFile3 == null) {
+    if (imageFile1 == null) {
       MySnackbar.show(context, 'Selecciona las tres imagenes');
-      return;
-    }
-
-    // ignore: unnecessary_null_comparison
-    if (idCategory == null) {
-      MySnackbar.show(context, 'Selecciona la categoria del producto');
       return;
     }
 
@@ -86,25 +81,13 @@ class RestaurantProductsCreateController {
     images.add(imageFile2!);
     images.add(imageFile3!);
 
-    _progressDialog.show(max: 100, msg: 'Espere un momento');
-    Stream stream = await _productsProvider.create(product, images);
-    stream.listen((res) {
-      _progressDialog.close();
-
-      ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
-      MySnackbar.show(context, responseApi.message!);
-
-      if (responseApi.success!) {
-        resetValues();
-      }
-    });
-
     print('Formulario Producto: ${product.toJson()}');
   }
 
   void resetValues() {
     nameController.text = '';
     descriptionController.text = '';
+    establecimientoController.text = '';
     priceController.text = '0.0';
     // imageFile1 = null;
     // imageFile2 = null;
@@ -118,7 +101,7 @@ class RestaurantProductsCreateController {
     pickedFile = await ImagePicker().getImage(source: imageSource!);
     if (pickedFile != null) {
       if (numberFile == 1) {
-        //    imageFile1 = File(pickedFile.path);
+        imageFile1 = File(pickedFile!.path);
       } else if (numberFile == 2) {
         //    imageFile2 = File(pickedFile.path);
       } else if (numberFile == 3) {

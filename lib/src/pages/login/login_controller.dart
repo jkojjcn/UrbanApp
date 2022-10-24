@@ -1,60 +1,75 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
 import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:jcn_delivery/src/utils/my_snackbar.dart';
-import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
-class LoginController {
+class LoginController extends GetxController {
   late BuildContext context;
   TextEditingController emailController = new TextEditingController();
   TextEditingController passwordController = new TextEditingController();
 
+  TextEditingController codeAuthentication = new TextEditingController();
+
+  GetStorage storage = GetStorage();
+
   UsersProvider usersProvider = new UsersProvider();
   PushNotificationsProvider pushNotificationsProvider =
       new PushNotificationsProvider();
-  SharedPref _sharedPref = new SharedPref();
 
   Future init(BuildContext context) async {
     this.context = context;
     await usersProvider.init(context);
 
-    User user = User.fromJson(await _sharedPref.read('user') ?? {});
+    User user = User.fromJson(GetStorage().read('user'));
 
     print('Usuario: ${user.toJson()}');
-
-    if (user.roles!.length > 1) {
-      Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
-    } else {
-      Navigator.pushNamedAndRemoveUntil(
-          context, user.roles![0].route!, (route) => false);
-    }
   }
 
   void goToRegisterPage() {
-    Navigator.pushNamed(context, 'register');
+    Get.toNamed('/register');
   }
 
   void login() async {
     String email = emailController.text.toLowerCase().trim();
     String password = passwordController.text.trim();
-    ResponseApi responseApi = await usersProvider.login(email, password);
-    if (responseApi.success!) {
-      User user = User.fromJson(responseApi.data);
-      _sharedPref.save('user', user.toJson());
-
-      pushNotificationsProvider.saveToken(user.id!);
-
-      print('USUARIO LOGEADO: ${user.toJson()}');
-      if (user.roles!.length > 1) {
-        Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
+    if (email.isNotEmpty && password.isNotEmpty) {
+      ResponseApi responseApi = await usersProvider.login(email, password);
+      if (responseApi.success == true) {
+        User us = User.fromJson(responseApi.data);
+        storage.write('user', us.toJson());
+        Get.snackbar('${us.name}', 'Hemos preparado lo mejor para ti',
+            backgroundColor: Colors.black, colorText: Colors.white);
+        Get.toNamed('/roles');
+        dynamic currentUserData = await storage.read('user');
+        log(currentUserData.toString());
       } else {
-        Navigator.pushNamedAndRemoveUntil(
-            context, user.roles![0].route!, (route) => false);
+        Get.snackbar('Error', 'No se ha iniciado sesión');
       }
     } else {
-      MySnackbar.show(context, responseApi.message!);
+      Get.snackbar('Complete lo datos', 'Ingrese su email y contraseña');
+    }
+  }
+
+  void loginPhone(String userUid, String phone) async {
+    ResponseApi responseApi = await usersProvider.loginPhone(userUid, phone);
+    if (responseApi.success == true) {
+      User us = User.fromJson(responseApi.data);
+      storage.write('user', us.toJson());
+      Get.snackbar('${us.name}', 'Hemos preparado lo mejor para ti',
+          backgroundColor: Colors.black, colorText: Colors.white);
+      Get.toNamed('/roles');
+    } else {
+      Get.toNamed('/register');
+      //    Get.snackbar('Error', 'No se ha iniciado sesión');
     }
   }
 }

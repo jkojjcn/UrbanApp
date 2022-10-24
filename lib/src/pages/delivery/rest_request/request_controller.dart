@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
@@ -31,8 +32,7 @@ class RestRequestController {
   Set<Polyline> polylines = {};
   List<LatLng> points = [];
 
-  late User user;
-  SharedPref _sharedPref = new SharedPref();
+  User? user;
 
   PushNotificationsProvider pushNotificationsProvider =
       new PushNotificationsProvider();
@@ -62,7 +62,7 @@ class RestRequestController {
           : addMarker(data['id'], data['lat'], data['lng'],
               'Restaurante Solicita', '', homeMarker!);
     });
-    user = User.fromJson(await _sharedPref.read('user'));
+    user = User.fromJson(GetStorage().read('user'));
     checkGPS();
   }
 

@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:jcn_delivery/src/models/address.dart';
+import 'package:jcn_delivery/src/models/orderProductsModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 
@@ -17,14 +19,16 @@ class Order {
   double? lat;
   double? lng;
   int? timestamp;
-  List<Product> products = [];
+  List<OrderProductModel>? productsOrder;
+  List<Product>? products;
+
   List<Order> toList = [];
- late User client;
-late  User? delivery ;
-late  Address address;
+  late User client;
+  late User? delivery;
+  late Address address;
   String? restaurantId;
   String? features;
-late  Product? restaurant;
+  late Product? restaurant;
   double? distance;
   double? restaurantTime;
   String? acepted;
@@ -40,10 +44,11 @@ late  Product? restaurant;
       this.lat,
       this.lng,
       this.timestamp,
-   required   this.products,
-    required  this.client,
-   this.delivery,
-   required   this.address,
+      this.productsOrder,
+      this.products,
+      required this.client,
+      this.delivery,
+      required this.address,
       this.restaurantId,
       this.features,
       this.restaurant,
@@ -64,20 +69,21 @@ late  Product? restaurant;
       timestamp: json["timestamp"] is String
           ? int.parse(json["timestamp"])
           : json["timestamp"],
-      products: json["products"] != null
-          ? List<Product>.from(json["products"].map((model) =>
-                  model is Product ? model : Product.fromJson(model)))
-          : [],
+      productsOrder: List<OrderProductModel>.from((json["products"] as List)
+          .map((e) => OrderProductModel.fromJson(e))
+          .toList()),
       client: json['client'] is String
           ? userFromJson(json['client'])
           : json['client'] is User
               ? json['client']
               : User.fromJson(json['client'] ?? {}),
-      delivery: json['delivery'] != null? (json['delivery'] is String
-          ? userFromJson(json['delivery'])
-          : json['delivery'] is User
-              ? json['delivery']
-              : User.fromJson(json['delivery'] ?? {})) : {},
+      delivery: json['delivery'] != null
+          ? (json['delivery'] is String
+              ? userFromJson(json['delivery'])
+              : json['delivery'] is User
+                  ? json['delivery']
+                  : User.fromJson(json['delivery'] ?? {}))
+          : {},
       address: json['address'] is String
           ? addressFromJson(json['address'])
           : json['address'] is Address
@@ -104,12 +110,27 @@ late  Product? restaurant;
               : json["total_cliente"]) ??
           0.0);
 
-   Order.fromJsonList(List<dynamic> jsonList) {
+  Order.fromJsonList(List<dynamic> jsonList) {
     // ignore: unnecessary_null_comparison
     if (jsonList == null) return;
+
     jsonList.forEach((item) {
-      Order order = Order.fromJson(item);
-      toList.add(order);
+      if (item is Order) {
+        log('Es Order');
+
+        toList.add(item);
+      } else if (item is String) {
+        log('Es String');
+
+        Order order = Order.fromJson(jsonDecode(item));
+        toList.add(order);
+      } else {
+        log('Es Json, Intentando decodificar ..');
+        log(item.toString());
+        Order order = Order.fromJson(item);
+        log('Orden decodificada');
+        toList.add(order);
+      }
     });
   }
 

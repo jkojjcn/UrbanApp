@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
 import 'package:jcn_delivery/src/models/message.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
@@ -11,13 +14,144 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 
-class UsersProvider {
-  String _url = Environment.API_DELIVERY;
-  String _api = '/api/users';
-  String _apiMessage = '/api/message';
+class UsersProvider extends GetConnect {
+  String rutaNew = Environment.API_DELIVERY_NEW + '/api/users';
+  String ruta = Environment.API_DELIVERY;
+
+  String _apiMessage = 'api/message';
+
+  User userSession = User.fromJson(GetStorage().read('user') ?? {});
 
   late BuildContext context;
   User? sessionUser;
+
+  Future<List<User>> getUsers() async {
+    Response response = await get('$rutaNew/getAll/${userSession.id}',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': userSession.sessionToken!
+        });
+
+    if (response.statusCode == 401) {
+      Get.snackbar('Petición denegada',
+          'Tu usuario no tiene permitido obtener esta información');
+      return [];
+    }
+
+    List<User> users = User.fromJsonGetxList(response.body);
+    return users;
+  }
+
+  Future<Stream> updateWithImage(User user, File image) async {
+    Uri url = Uri.http('$ruta', '/api/users/updateWithImage');
+    log('$url');
+    final request = http.MultipartRequest('PUT', url);
+    request.headers['Authorization'] = userSession.sessionToken!;
+    request.files.add(http.MultipartFile(
+        'image', http.ByteStream(image.openRead().cast()), await image.length(),
+        filename: basename(image.path)));
+    request.fields['user'] = json.encode(user);
+    final response = await request.send();
+    return response.stream.transform(utf8.decoder);
+  }
+
+  Future<Stream> createWithImage(User user, image) async {
+    Uri url = Uri.http('$ruta', '/api/users/create');
+    log('$url');
+    final request = http.MultipartRequest('POST', url);
+    try {
+      request.files.add(http.MultipartFile('image',
+          http.ByteStream(image.openRead().cast()), await image.length(),
+          filename: basename(image.path)));
+    } catch (e) {
+      log(e.toString());
+    }
+    request.fields['user'] = json.encode(user);
+    final response = await request.send();
+    return response.stream.transform(utf8.decoder);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////
+  ///
+  ///
+  Future<Stream> createWithImagePhone(User user, image) async {
+    Uri url = Uri.http('$ruta', '/api/users/createPhone');
+    log('$url');
+    final request = http.MultipartRequest('POST', url);
+    try {
+      request.files.add(http.MultipartFile('image',
+          http.ByteStream(image.openRead().cast()), await image.length(),
+          filename: basename(image.path)));
+    } catch (e) {
+      log(e.toString());
+    }
+    request.fields['user'] = json.encode(user);
+    final response = await request.send();
+    return response.stream.transform(utf8.decoder);
+  }
+
+  Future<ResponseApi> update(User user) async {
+    Response response = await put('$rutaNew/update', user.toJson(), headers: {
+      'Content-type': 'application/json',
+      'Authorization': userSession.sessionToken!
+    });
+
+    if (response.body == null) {
+      Get.snackbar('Error', 'No se pudo actualizar su cuenta, reintente!');
+      return ResponseApi();
+    }
+    ResponseApi responseApi = ResponseApi.fromJson(response.body);
+
+    return responseApi;
+  }
+
+  Future<ResponseApi> login(String email, String password) async {
+    Response response = await post(
+        '$rutaNew/login', {'email': email, 'password': password},
+        headers: {'Content-type': 'application/json'});
+
+    if (response.body == null) {
+      Get.snackbar('Error', 'No se ha podido logear su cuenta, reintente.');
+      return ResponseApi();
+    }
+    ResponseApi responseApi = ResponseApi.fromJson(response.body);
+
+    return responseApi;
+  }
+
+  Future<ResponseApi> loginPhone(String uidUser, String phone) async {
+    Response response = await post(
+        '$rutaNew/loginPhone', {'phone': phone, 'password': uidUser},
+        headers: {'Content-type': 'application/json'});
+
+    if (response.body == null) {
+      Get.snackbar('Error', 'No se ha podido logear su cuenta, reintente.');
+      return ResponseApi();
+    }
+    ResponseApi responseApi = ResponseApi.fromJson(response.body);
+
+    return responseApi;
+  }
+
+  //// Update Notification Token
+  Future<ResponseApi> updateNotificationToken(
+      String idUser, String token) async {
+    Response response = await put('$rutaNew/updateNotificationToken', {
+      'id': idUser,
+      'notification_token': token
+    }, headers: {
+      'Content-type': 'application/json',
+      'Authorization': userSession.sessionToken!
+    });
+
+    if (response.body == null) {
+      Get.snackbar('Error', 'No se pudo actualizar su cuenta, reintente!');
+      return ResponseApi();
+    }
+    ResponseApi responseApi = ResponseApi.fromJson(response.body);
+
+    return responseApi;
+  }
 
   Future init(BuildContext context, {sessionUser}) async {
     this.context = context;
@@ -26,32 +160,8 @@ class UsersProvider {
 
 // Message
 
-  Future<List<Message>> getMessage(String idUser) async {
-    try {
-      Uri url = Uri.http(_url, '$_apiMessage/findMessage/$idUser');
-      Map<String, String> headers = {
-        'Content-type': 'application/json',
-        'Authorization': sessionUser?.sessionToken ?? ""
-      };
-      final res = await http.get(url, headers: headers);
-
-      if (res.statusCode == 401) {
-        Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser?.id ?? "");
-      }
-      final data = json.decode(res.body); // CATEGORIAS
-      Message message = Message.fromJsonList(data);
-      // product.toList.sort((a, b) => a.lat.compareTo(b.price));
-      // print(product.toJson());
-      return message.toList;
-    } catch (e) {
-      print('Error: $e');
-      return [];
-    }
-  }
-
   Future<User> getById(String id) async {
-    Uri url = Uri.http(_url, '$_api/findById/$id');
+    Uri url = Uri.http(ruta, '$ruta/findById/$id');
     Map<String, String> headers = {
       'Content-type': 'application/json',
       'Authorization': sessionUser!.sessionToken!
@@ -61,7 +171,7 @@ class UsersProvider {
     if (res.statusCode == 401) {
       // NO AUTORIZADO
       Fluttertoast.showToast(msg: 'Tu sesion expiro');
-      new SharedPref().logout(context, sessionUser!.id!);
+      new GeneralActions().logout(context, sessionUser!.id!);
     }
 
     final data = json.decode(res.body);
@@ -70,7 +180,7 @@ class UsersProvider {
   }
 
   Future<List<User>> getDeliveryMen() async {
-    Uri url = Uri.http(_url, '$_api/findDeliveryMen');
+    Uri url = Uri.http(ruta, '/api/users/findDeliveryMen');
     Map<String, String> headers = {
       'Content-type': 'application/json',
       'Authorization': sessionUser!.sessionToken!
@@ -80,7 +190,10 @@ class UsersProvider {
     if (res.statusCode == 401) {
       // NO AUTORIZADO
       Fluttertoast.showToast(msg: 'Tu sesion expiro');
-      new SharedPref().logout(context, sessionUser!.id!);
+      new GeneralActions().logout(context, sessionUser!.id!);
+    }
+    if (res.body.isEmpty) {
+      log('El delivery está vacio');
     }
 
     final data = json.decode(res.body);
@@ -88,95 +201,9 @@ class UsersProvider {
     return user.toList;
   }
 
-  Future<List<String>> getAdminsNotificationTokens() async {
-    Uri url = Uri.http(_url, '$_api/getAdminsNotificationTokens');
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-      'Authorization': sessionUser!.sessionToken!
-    };
-    final res = await http.get(url, headers: headers);
-
-    if (res.statusCode == 401) {
-      // NO AUTORIZADO
-      Fluttertoast.showToast(msg: 'Tu sesion expiro');
-      new SharedPref().logout(context, sessionUser!.id!);
-    }
-
-    final data = json.decode(res.body);
-    final tokens = List<String>.from(data);
-    return tokens;
-  }
-
-  Future<Stream> createWithImage(User user) async {
-    Uri url = Uri.http(_url, '$_api/create');
-    final request = http.MultipartRequest('POST', url);
-
-    request.fields['user'] = json.encode(user);
-    final response = await request.send(); // ENVIARA LA PETICION
-    return response.stream.transform(utf8.decoder);
-  }
-
-  Future<Stream> update(User user, File image) async {
-    Uri url = Uri.http(_url, '$_api/update');
-    final request = http.MultipartRequest('PUT', url);
-    request.headers['Authorization'] = sessionUser!.sessionToken!;
-
-    // ignore: unnecessary_null_comparison
-    if (image != null) {
-      request.files.add(http.MultipartFile('image',
-          http.ByteStream(image.openRead().cast()), await image.length(),
-          filename: basename(image.path)));
-    }
-
-    request.fields['user'] = json.encode(user);
-    final response = await request.send(); // ENVIARA LA PETICION
-
-    if (response.statusCode == 401) {
-      Fluttertoast.showToast(msg: 'Tu sesion expiro');
-      new SharedPref().logout(context, sessionUser!.id!);
-    }
-
-    return response.stream.transform(utf8.decoder);
-  }
-
-  Future<ResponseApi> create(User user) async {
-    Uri url = Uri.http(_url, '$_api/create');
-    String bodyParams = json.encode(user);
-    Map<String, String> headers = {'Content-type': 'application/json'};
-    final res = await http.post(url, headers: headers, body: bodyParams);
-    final data = json.decode(res.body);
-    ResponseApi responseApi = ResponseApi.fromJson(data);
-    return responseApi;
-  }
-
-  Future<ResponseApi> updateNotificationToken(
-      String idUser, String token) async {
-    Uri url = Uri.http(_url, '$_api/updateNotificationToken');
-    String bodyParams =
-        json.encode({'id': idUser, 'notification_token': token});
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-    };
-    final res = await http.put(url, headers: headers, body: bodyParams);
-
-    final data = json.decode(res.body);
-    ResponseApi responseApi = ResponseApi.fromJson(data);
-    return responseApi;
-  }
-
   Future<ResponseApi> logout(String idUser) async {
-    Uri url = Uri.http(_url, '$_api/logout');
+    Uri url = Uri.http('$ruta', '/logout');
     String bodyParams = json.encode({'id': idUser});
-    Map<String, String> headers = {'Content-type': 'application/json'};
-    final res = await http.post(url, headers: headers, body: bodyParams);
-    final data = json.decode(res.body);
-    ResponseApi responseApi = ResponseApi.fromJson(data);
-    return responseApi;
-  }
-
-  Future<ResponseApi> login(String email, String password) async {
-    Uri url = Uri.http(_url, '$_api/login');
-    String bodyParams = json.encode({'email': email, 'password': password});
     Map<String, String> headers = {'Content-type': 'application/json'};
     final res = await http.post(url, headers: headers, body: bodyParams);
     final data = json.decode(res.body);

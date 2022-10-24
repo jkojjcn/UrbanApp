@@ -1,13 +1,15 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
 import 'package:jcn_delivery/src/models/address.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
-import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
 class AddressProvider {
   String _url = Environment.API_DELIVERY;
@@ -32,7 +34,12 @@ class AddressProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        try {
+          await GetStorage().remove('user');
+          Navigator.pushNamedAndRemoveUntil(context, 'login', (route) => false);
+        } catch (e) {
+          log(e.toString());
+        }
       }
       final data = json.decode(res.body); // CATEGORIAS
       Address address = Address.fromJsonList(data);
@@ -54,7 +61,12 @@ class AddressProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      try {
+        await GetStorage().remove('user');
+        Navigator.pushNamedAndRemoveUntil(context, 'login', (route) => false);
+      } catch (e) {
+        log(e.toString());
+      }
     }
 
     final data = json.decode(res.body);

@@ -1,10 +1,13 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:get/get.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/pages/client/orders/list/client_orders_list_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
+import 'package:timer_builder/timer_builder.dart';
 
 class ClientOrdersListPage extends StatefulWidget {
   const ClientOrdersListPage({Key? key}) : super(key: key);
@@ -22,7 +25,7 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
 
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh);
-      _actualizar();
+      //     _actualizar();
     });
   }
 
@@ -47,6 +50,18 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
             child: AppBar(
               title: Text('Mis pedidos'),
               backgroundColor: Colors.black,
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      Get.toNamed('/centralChat');
+                    },
+                    icon: Icon(Icons.help)),
+              ],
+              leading: IconButton(
+                  onPressed: () {
+                    Get.offNamedUntil('/client/restaurants', (route) => false);
+                  },
+                  icon: Icon(Icons.arrow_back_ios_new_sharp)),
               bottom: TabBar(
                 indicatorColor: MyColors.primaryColor,
                 labelColor: Colors.orange,
@@ -71,25 +86,28 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
           body: TabBarView(
             children: _con.status.map((String status) {
               print(status);
-              return FutureBuilder(
-                  future: _con.getOrders(status),
-                  builder: (context, AsyncSnapshot<List<Order>> snapshot) {
-                    if (snapshot.hasData) {
-                      if (snapshot.data?.length != null) {
-                        return ListView.builder(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 20),
-                            itemCount: snapshot.data?.length ?? 0,
-                            itemBuilder: (_, index) {
-                              return _cardOrder(snapshot.data![index]);
-                            });
+              return TimerBuilder.periodic(Duration(seconds: 20),
+                  builder: (context) {
+                return FutureBuilder(
+                    future: _con.getOrders(status),
+                    builder: (context, AsyncSnapshot<List<Order>> snapshot) {
+                      if (snapshot.hasData) {
+                        if (snapshot.data?.length != null) {
+                          return ListView.builder(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 20),
+                              itemCount: snapshot.data?.length ?? 0,
+                              itemBuilder: (_, index) {
+                                return _cardOrder(snapshot.data![index]);
+                              });
+                        } else {
+                          return NoDataWidget(text: 'No hay ordenes');
+                        }
                       } else {
                         return NoDataWidget(text: 'No hay ordenes');
                       }
-                    } else {
-                      return NoDataWidget(text: 'No hay ordenes');
-                    }
-                  });
+                    });
+              });
             }).toList(),
           ),
         ),
@@ -117,112 +135,118 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
       print(e);
     }
 
-    return GestureDetector(
-      onTap: () {
-        _con.openBottomSheet(order);
-      },
-      child: Container(
-        height: 155,
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-        child: Card(
-          elevation: 3.0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          child: Stack(
-            children: [
-              Positioned(
+    return FadeInDown(
+      from: 20,
+      duration: Duration(milliseconds: 200),
+      child: GestureDetector(
+        onTap: () {
+          _con.openBottomSheet(order);
+        },
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+          child: Card(
+            elevation: 3.0,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            child: Stack(
+              children: [
+                Positioned(
+                    child: Container(
+                  height: 30,
+                  width: MediaQuery.of(context).size.width * 1,
+                  decoration: BoxDecoration(
+                      color: MyColors.primaryColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      )),
                   child: Container(
-                height: 30,
-                width: MediaQuery.of(context).size.width * 1,
-                decoration: BoxDecoration(
-                    color: MyColors.primaryColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(15),
-                      topRight: Radius.circular(15),
-                    )),
-                child: Container(
-                  width: double.infinity,
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Orden #${order.id}',
-                    style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.white,
-                        fontFamily: 'NimbusSans'),
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Orden #${order.id}',
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.white,
+                          fontFamily: 'NimbusSans'),
+                    ),
+                  ),
+                )),
+                Container(
+                  margin: EdgeInsets.only(top: 30, left: 20, right: 20),
+                  child: Column(
+                    children: [
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        margin: EdgeInsets.symmetric(vertical: 5),
+                        width: double.infinity,
+                        child: Text(
+                          order.restaurant!.name!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
+                      ((_tiempoDistancia! + order.restaurantTime!) -
+                                  double.parse(_tiempoDeOrden)) >=
+                              -30
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.delivery_dining_outlined,
+                                  size: 15,
+                                ),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  child: Text(
+                                    (order.restaurantTime != 0.0
+                                        ? 'Llegada estimada en: ' +
+                                            ((_tiempoDistancia +
+                                                        order.restaurantTime!) -
+                                                    double.parse(
+                                                        _tiempoDeOrden))
+                                                .toStringAsFixed(0) +
+                                            ' minutos'
+                                        : 'Esperando tiempo de preparación'),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 10),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Container(),
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        width: double.infinity,
+                        margin: EdgeInsets.symmetric(vertical: 5),
+                        child: Text(
+                          'Repartidor: ${order.delivery?.name ?? 'Asignando..'} ${order.delivery?.lastname ?? ''}',
+                          style: TextStyle(fontSize: 13),
+                          maxLines: 1,
+                        ),
+                      ),
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        width: double.infinity,
+                        margin: EdgeInsets.symmetric(vertical: 5),
+                        child: Text(
+                          'Entregar en: ${order.address.address ?? ''}',
+                          style: TextStyle(fontSize: 13),
+                          maxLines: 2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              )),
-              Container(
-                margin: EdgeInsets.only(top: 40, left: 20, right: 20),
-                child: Column(
-                  children: [
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      margin: EdgeInsets.symmetric(vertical: 5),
-                      width: double.infinity,
-                      child: Text(
-                        order.restaurant!.name!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13),
-                      ),
-                    ),
-                    ((_tiempoDistancia! + order.restaurantTime!) -
-                                double.parse(_tiempoDeOrden)) >=
-                            -30
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.delivery_dining_outlined,
-                                size: 15,
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Container(
-                                width: MediaQuery.of(context).size.width * 0.5,
-                                child: Text(
-                                  (order.restaurantTime != 0.0
-                                      ? 'Llegada estimada en: ' +
-                                          ((_tiempoDistancia +
-                                                      order.restaurantTime!) -
-                                                  double.parse(_tiempoDeOrden))
-                                              .toStringAsFixed(0) +
-                                          ' minutos'
-                                      : 'Esperando tiempo de preparación'),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 10),
-                                ),
-                              ),
-                            ],
-                          )
-                        : Container(),
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      width: double.infinity,
-                      margin: EdgeInsets.symmetric(vertical: 5),
-                      child: Text(
-                        'Repartidor: ${order.delivery?.name ?? 'Asignando..'} ${order.delivery?.lastname ?? ''}',
-                        style: TextStyle(fontSize: 13),
-                        maxLines: 1,
-                      ),
-                    ),
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      width: double.infinity,
-                      margin: EdgeInsets.symmetric(vertical: 5),
-                      child: Text(
-                        'Entregar en: ${order.address.address ?? ''}',
-                        style: TextStyle(fontSize: 13),
-                        maxLines: 2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

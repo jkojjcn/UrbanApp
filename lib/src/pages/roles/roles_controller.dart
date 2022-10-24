@@ -1,25 +1,32 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:jcn_delivery/src/models/rol.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
 class RolesController {
- late BuildContext context;
- late Function refresh;
+  late BuildContext context;
+  late Function refresh;
 
-  User? user;
-  SharedPref sharedPref = new SharedPref();
+  List<Rol>? roles;
+
+  User user = User.fromJson(GetStorage().read('user'));
 
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
     this.refresh = refresh;
 
+    // roles!.add(rolFromJson(user.roles![0]));
+
     // OBTENER EL USUARIO DE SESION
-    user = User.fromJson(
-        await sharedPref.read('user')); // PODRIA TARDAR UN TIEMPO EN OBTENERSE
+
     refresh();
   }
 
   void goToPage(String route) {
-    Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
+    Get.offNamedUntil(route, (route) => false);
   }
 }

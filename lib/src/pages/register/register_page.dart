@@ -1,33 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:get/get.dart';
 import 'package:jcn_delivery/src/pages/register/register_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
-
-  @override
-  _RegisterPageState createState() => _RegisterPageState();
-}
-
-class _RegisterPageState extends State<RegisterPage> {
-  RegisterController _con = new RegisterController();
-
-  @override
-  void initState() {
-    super.initState();
-
-    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-      _con.init(context, refresh);
-    });
-  }
+class RegisterPage extends StatelessWidget {
+  RegisterController con = Get.put(RegisterController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // backgroundColor: Colors.blueGrey[900],
       body: Container(
-        decoration: BoxDecoration(color: Colors.black),
+        decoration: BoxDecoration(color: Color.fromARGB(255, 46, 46, 46)),
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 1,
         child: Stack(
@@ -39,25 +24,25 @@ class _RegisterPageState extends State<RegisterPage> {
               left: 27,
             ),
             Positioned(
-              child: _iconBack(),
+              child: IconButton(
+                  onPressed: () {
+                    Get.back();
+                  },
+                  icon: Icon(Icons.arrow_back_ios, color: Colors.white)),
               top: 51,
               left: 5,
             ),
             Container(
               width: double.infinity,
-              margin: EdgeInsets.only(top: 150),
+              margin: EdgeInsets.only(top: 120),
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    //     _imageUser(),
+                    _imageUser(context),
                     SizedBox(height: 30),
                     _textFieldEmail(),
                     _textFieldName(),
-                    //       _textFieldLastName(),
-                    _textFieldPhone(),
-                    _textFieldPassword(),
-                    _textFieldConfirmPassword(),
-                    _buttonLogin()
+                    _buttonLogin(context)
                   ],
                 ),
               ),
@@ -68,22 +53,38 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-/*  Widget _imageUser() {
+  Widget _imageUser(BuildContext context) {
     return GestureDetector(
-      onTap: _con.showAlertDialog,
-      child: CircleAvatar(
-        backgroundImage: FileImage(_con.imageFile! )
-           ,
-        radius: 60,
-        backgroundColor: Colors.grey[200],
+      onTap: () => con.showAlertDialog(context),
+      child: GetBuilder<RegisterController>(
+        builder: (controller) => Column(
+          children: [
+            CircleAvatar(
+              backgroundImage: con.imageFile != null
+                  ? FileImage(con.imageFile!)
+                  : AssetImage('assets/iconApp/fly.png') as ImageProvider,
+              radius: 60,
+              backgroundColor: Colors.grey[200],
+            ),
+            con.imageFile != null
+                ? Text(
+                    'Listo!',
+                    style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 14,
+                        fontFamily: 'MontserratRegular'),
+                  )
+                : Text(
+                    'Cambiar Imagen',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: 'MontserratRegular'),
+                  ),
+          ],
+        ),
       ),
     );
-  }*/
-
-  Widget _iconBack() {
-    return IconButton(
-        onPressed: _con.back,
-        icon: Icon(Icons.arrow_back_ios, color: Colors.white));
   }
 
   Widget _textRegister() {
@@ -101,7 +102,7 @@ class _RegisterPageState extends State<RegisterPage> {
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
-        controller: _con.emailController,
+        controller: con.emailController,
         keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
             hintText: 'Correo electronico',
@@ -122,7 +123,7 @@ class _RegisterPageState extends State<RegisterPage> {
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(30)),
       child: TextField(
-        controller: _con.nameController,
+        controller: con.nameController,
         decoration: InputDecoration(
             hintText: 'Nombre y apellido',
             border: InputBorder.none,
@@ -136,86 +137,26 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _textFieldPhone() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(30)),
-      child: TextField(
-        controller: _con.phoneController,
-        keyboardType: TextInputType.phone,
-        decoration: InputDecoration(
-            hintText: 'Telefono',
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(15),
-            hintStyle: TextStyle(color: MyColors.primaryColorDark),
-            prefixIcon: Icon(
-              Icons.phone,
-              color: MyColors.primaryColor,
-            )),
-      ),
-    );
-  }
-
-  Widget _textFieldPassword() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(30)),
-      child: TextField(
-        controller: _con.passwordController,
-        obscureText: true,
-        decoration: InputDecoration(
-            hintText: 'Contraseña',
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(15),
-            hintStyle: TextStyle(color: MyColors.primaryColorDark),
-            prefixIcon: Icon(
-              Icons.lock,
-              color: MyColors.primaryColor,
-            )),
-      ),
-    );
-  }
-
-  Widget _textFieldConfirmPassword() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 50, vertical: 5),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(30)),
-      child: TextField(
-        controller: _con.confirmPassswordController,
-        obscureText: true,
-        decoration: InputDecoration(
-            hintText: 'Confirmar Contraseña',
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(15),
-            hintStyle: TextStyle(color: MyColors.primaryColorDark),
-            prefixIcon: Icon(
-              Icons.lock_outline,
-              color: MyColors.primaryColor,
-            )),
-      ),
-    );
-  }
-
-  Widget _buttonLogin() {
+  Widget _buttonLogin(context) {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: 50, vertical: 30),
       child: ElevatedButton(
-        onPressed: _con.isEnable ? _con.register : null,
+        onPressed: () {
+          if (con.isEnable) {
+            con.register(context);
+          } else {
+            null;
+          }
+        },
         child: Text('REGISTRARSE'),
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: MyColors.primaryColor,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             padding: EdgeInsets.symmetric(vertical: 15)),
       ),
     );
-  }
-
-  void refresh() {
-    setState(() {});
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
 import 'package:jcn_delivery/src/models/publications.dart';
@@ -19,9 +20,9 @@ class PublicationsProvider {
     this.sessionUser = sessionUser;
   }
 
-  Future<List<Publications>> getPublications() async {
+  Future<List<Publications>> getAll() async {
     try {
-      Uri url = Uri.http(_url, '$_api/getPublications/');
+      Uri url = Uri.http(_url, '$_api/getAll');
       Map<String, String> headers = {
         'Content-type': 'application/json',
         'Authorization': sessionUser.sessionToken!
@@ -30,13 +31,19 @@ class PublicationsProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        new GeneralActions().logout(context, sessionUser.id!);
       }
-      final data = json.decode(res.body); // CATEGORIAS
-      Publications publications = Publications.fromJsonList(data);
-      // product.toList.sort((a, b) => a.lat.compareTo(b.price));
-      // print(product.toJson());
-      return publications.toList;
+      if (res.statusCode == 201) {
+        final data = json.decode(res.body); // publicaciones
+
+        log('Llegaron bien $data');
+
+        Publications publications = Publications.fromJsonList(data);
+        return publications.toList;
+      } else {
+        log('Error: ${res.statusCode}');
+        return [];
+      }
     } catch (e) {
       print('Error: $e');
       return [];

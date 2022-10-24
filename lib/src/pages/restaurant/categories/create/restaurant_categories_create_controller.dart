@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/models/category.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
@@ -7,20 +8,18 @@ import 'package:jcn_delivery/src/utils/my_snackbar.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 
 class RestaurantCategoriesCreateController {
- late BuildContext context;
- late Function refresh;
+  late BuildContext context;
+  late Function refresh;
 
   TextEditingController nameController = new TextEditingController();
   TextEditingController descriptionController = new TextEditingController();
 
   CategoriesProvider _categoriesProvider = new CategoriesProvider();
- late User user;
-  SharedPref sharedPref = new SharedPref();
-
+  late User user;
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
     this.refresh = refresh;
-    user = User.fromJson(await sharedPref.read('user'));
+    user = User.fromJson(GetStorage().read('user'));
     _categoriesProvider.init(context, user);
   }
 

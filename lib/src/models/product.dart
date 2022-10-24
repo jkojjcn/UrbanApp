@@ -1,4 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
+
+import 'package:jcn_delivery/src/models/features.dart';
+import 'package:jcn_delivery/src/models/sabores.dart';
 
 Product productFromJson(String str) => Product.fromJson(json.decode(str));
 
@@ -20,9 +24,10 @@ class Product {
   List<Product> toList = [];
   double? lat;
   double? lng;
-  String? features;
+  Features? features;
   String? sabores;
   String? notificationTokenR;
+  String? masterNotificationToken;
 
   Product(
       {this.id,
@@ -41,7 +46,8 @@ class Product {
       this.features,
       this.sabores,
       this.priceRestaurant,
-      this.notificationTokenR});
+      this.notificationTokenR,
+      this.masterNotificationToken});
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
       id: json["id"] is int ? json["id"].toString() : json['id'],
@@ -49,7 +55,7 @@ class Product {
       description: json["description"],
       image1: json["image1"],
       image2: json["image2"],
-      image3: json["image3"],
+      image3: json["image3"] ?? '',
       image4: json["image4"],
       price: json['price'] != null
           ? json['price'] is String
@@ -86,18 +92,41 @@ class Product {
                   ? json["lng"].toDouble()
                   : json['lng'])
           : 0.0,
-      features: json['features'],
-      sabores: json['sabores'] ?? '',
+      features: json["features"] != null
+          ? Features.fromJson(jsonDecode(json["features"]))
+          : Features(
+              id: 'test',
+              name: 'nombretest',
+              description: 'descriptiontest',
+              content: <Sabores>[],
+              max: 1,
+              min: 1),
       notificationTokenR:
-          json['notification_token'] != null ? json['notification_token'] : '');
+          json['notification_token'] != null ? json['notification_token'] : '',
+      masterNotificationToken: json['master_notification_token'] != null
+          ? json['master_notification_token']
+          : '');
 
   Product.fromJsonList(List<dynamic>? jsonList) {
     // ignore: unnecessary_null_comparison
     if (jsonList == null) return;
-    jsonList.forEach((item) {
-      Product product = Product.fromJson(item);
-      toList.add(product);
-    });
+    try {
+      jsonList.forEach((item) {
+        if (item is Product) {
+          log('Regreso en Product');
+
+          toList.add(item);
+        } else {
+          log('Regreso en Json');
+          Product product = Product.fromJson(item);
+          toList.add(product);
+        }
+      });
+    } catch (e) {
+      log('No se ha decodificado');
+
+      log(e.toString());
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -117,7 +146,8 @@ class Product {
         "lng": lng,
         "features": features,
         'sabores': sabores,
-        'notification_token': notificationTokenR
+        'notification_token': notificationTokenR,
+        'master_notification_token': masterNotificationToken
       };
 
   static bool isInteger(num value) =>

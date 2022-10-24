@@ -1,53 +1,61 @@
 import 'dart:convert';
+import 'dart:developer';
 
+import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/models/restaurant.dart';
 
-Publications userFromJson(String str) => Publications.fromJson(json.decode(str));
+Publications publicationsFromJson(String str) =>
+    Publications.fromJson(json.decode(str));
 
-String userToJson(Publications data) => json.encode(data.toJson());
+// user , {
+// id
+// title
+// subtitle
+// restaurant
+// type
+// createdAt
+// image1
+// image2
+// image3
+// approved
+// }
 
 class Publications {
-  String? id;
-  String? name;
-  String? lastname;
-  String? email;
-  String? phone;
-  String? comment;
-  String? notificationToken;
+  // String? id;
+  String? title;
+  String? subtitle;
+  String? fire;
   String? image;
-  String? picture;
-  String? approved;
+  int? restaurantId;
+
+  Restaurant? restaurant;
   List<Publications> toList = [];
   //MESSAGES
 
   Publications(
-      {this.id,
-      this.name,
-      this.lastname,
-      this.email,
-      this.phone,
-      this.comment,
-     //  this.sessionToken,
-     this.notificationToken,
-     this.image, 
-     this.approved,
-     this.picture,
-     });
+      { //this.id,
+      this.title,
+      this.subtitle,
+      this.restaurant,
+      this.image,
+      this.fire,
+      this.restaurantId});
 
   factory Publications.fromJson(Map<String, dynamic> json) => Publications(
-        id: json["id"] is int ? json['id'].toString() : json["id"],
-        name: json["name"],
-        lastname: json["lastname"],
-        email: json["email"],
-        phone: json["phone"],
-        comment: json["comment"],
-      //    sessionToken: json["session_token"],
-      notificationToken: json["notification_token"],
-        image: json["image"],
-        approved: json["approved"],
-        picture: json["picture"]
-      );
+      //  id: json["id"] is int ? json['id'].toString() : json["id"],
+      title: json["title"],
+      subtitle: json["subtitle"],
+      restaurant: json["restaurant"] is String
+          ? productFromJson(json['restaurant'])
+          : json['restaurant'] is Restaurant
+              ? json['restaurant']
+              : Restaurant.fromJson(json['restaurant'] ?? {}),
+      image: json["image"],
+      fire: json["fire"],
+      restaurantId: json["restaurant_id"]);
 
   Publications.fromJsonList(List<dynamic> jsonList) {
+    log("ENTRó en el decode de publications");
     // ignore: unnecessary_null_comparison
     if (jsonList == null) return;
     jsonList.forEach((item) {
@@ -55,17 +63,4 @@ class Publications {
       toList.add(user);
     });
   }
-
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
-        "lastname": lastname,
-        "email": email,
-        "phone": phone,
-        "comment": comment,
-       "notification_token": notificationToken,
-        "image": image,
-        "approved": approved,
-        "picture" : picture
-      };
 }

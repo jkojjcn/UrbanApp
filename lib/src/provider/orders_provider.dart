@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
+import 'package:get/get.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
 import 'package:jcn_delivery/src/models/message.dart';
 import 'package:jcn_delivery/src/models/order.dart';
@@ -34,7 +36,7 @@ class OrdersProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        new GeneralActions().logout(context, sessionUser.id!);
       }
       final data = json.decode(res.body); // CATEGORIAS
       Order order = Order.fromJsonList(data);
@@ -60,7 +62,7 @@ class OrdersProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        new GeneralActions().logout(context, sessionUser.id!);
       }
       final data = json.decode(res.body); // CATEGORIAS
       Order order = Order.fromJsonList(data);
@@ -84,13 +86,14 @@ class OrdersProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        new GeneralActions().logout(context, sessionUser.id!);
       }
-      final data = json.decode(res.body); // CATEGORIAS
+      final data = jsonDecode(res.body); // ORDERS
       Order order = Order.fromJsonList(data);
       return order.toList;
     } catch (e) {
-      print('Error: $e');
+      //  print('Error: $e');
+      //  log(e.toString());
       return [];
     }
   }
@@ -114,7 +117,7 @@ class OrdersProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        new GeneralActions().logout(context, sessionUser.id!);
       }
       final data = json.decode(res.body); // CATEGORIAS
       Order order = Order.fromJsonList(data);
@@ -127,8 +130,9 @@ class OrdersProvider {
   }
 
   Future<ResponseApi> create(Order order) async {
+    log(order.toJson().toString());
     Uri url = Uri.http(_url, '$_api/create');
-    String bodyParams = json.encode(order);
+    String bodyParams = jsonEncode(order.toJson());
     Map<String, String> headers = {
       'Content-type': 'application/json',
       'Authorization': sessionUser.sessionToken!
@@ -137,7 +141,11 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      new GeneralActions().logout(context, sessionUser.id!);
+    }
+
+    if (res.statusCode != 201) {
+      Get.snackbar('No se ha creado', 'Error');
     }
 
     final data = json.decode(res.body);
@@ -159,27 +167,7 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id ?? "");
-    }
-
-    final data = json.decode(res.body);
-    ResponseApi responseApi = ResponseApi.fromJson(data);
-
-    return responseApi;
-  }
-
-  Future<ResponseApi> createNotification(Message message) async {
-    Uri url = Uri.http(_url, '$_api2/createNotification/$message');
-    String bodyParams = json.encode(message);
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-      'Authorization': sessionUser.sessionToken!
-    };
-    final res = await http.post(url, headers: headers, body: bodyParams);
-
-    if (res.statusCode == 401) {
-      Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id ?? "");
+      new GeneralActions().logout(context, sessionUser.id ?? "");
     }
 
     final data = json.decode(res.body);
@@ -199,7 +187,7 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      new GeneralActions().logout(context, sessionUser.id!);
     }
 
     final data = json.decode(res.body);
@@ -225,7 +213,7 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      new GeneralActions().logout(context, sessionUser.id!);
     }
 
     final data = json.decode(res.body);
@@ -244,7 +232,7 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      new GeneralActions().logout(context, sessionUser.id!);
     }
 
     final data = json.decode(res.body);
@@ -263,7 +251,7 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      new GeneralActions().logout(context, sessionUser.id!);
     }
 
     final data = json.decode(res.body);
@@ -282,7 +270,7 @@ class OrdersProvider {
 
     if (res.statusCode == 401) {
       Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id!);
+      new GeneralActions().logout(context, sessionUser.id!);
     }
 
     final data = json.decode(res.body);

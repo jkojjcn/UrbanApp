@@ -1,6 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:jcn_delivery/src/pages/client/address/create/client_address_create_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
@@ -34,37 +35,7 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        appBar: AppBar(
-          //  backgroundColor: Color.fromRGBO(51, 0, 0, 1),
-          title: FadeIn(
-            child: Text(
-              'Crear dirección',
-              style: TextStyle(fontSize: 15, color: Colors.white70),
-            ),
-          ),
-          leading: FadeIn(
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              }, //_con.close,
-              icon: Container(
-                height: 30,
-                width: 30,
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Padding(
-                  padding: EdgeInsets.only(left: 8),
-                  child: Icon(
-                    Icons.arrow_back_ios,
-                    color: Colors.black,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        appBar: appBar(),
         bottomNavigationBar: FadeIn(
             duration: Duration(milliseconds: 500), child: _buttonAccept()),
         body: SingleChildScrollView(
@@ -76,6 +47,38 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
                 _textFieldNeighborhood(),
                 _textFieldRefPoint()
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  AppBar appBar() {
+    return AppBar(
+      title: FadeIn(
+        child: Text(
+          'Crear dirección',
+          style: TextStyle(fontSize: 15, color: Colors.white70),
+        ),
+      ),
+      leading: FadeIn(
+        child: IconButton(
+          onPressed: () {
+            Get.back();
+          },
+          icon: Container(
+            height: 30,
+            width: 30,
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(10)),
+            child: Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Icon(
+                Icons.arrow_back_ios,
+                color: Colors.black,
+                size: 20,
+              ),
             ),
           ),
         ),
@@ -144,6 +147,7 @@ class _ClientAddressCreatePageState extends State<ClientAddressCreatePage> {
         style: ElevatedButton.styleFrom(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            // ignore: deprecated_member_use
             primary: MyColors.primaryColor),
       ),
     );

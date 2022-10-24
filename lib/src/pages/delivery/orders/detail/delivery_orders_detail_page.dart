@@ -1,11 +1,21 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcn_delivery/src/models/order.dart';
+import 'package:jcn_delivery/src/models/orderProductsModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/models/user.dart';
 
 import 'package:jcn_delivery/src/pages/delivery/orders/detail/delivery_orders_detail_controller.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ignore: must_be_immutable
 class DeliveryOrdersDetailPage extends StatefulWidget {
@@ -23,6 +33,7 @@ class DeliveryOrdersDetailPage extends StatefulWidget {
 
 class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
   DeliveryOrdersDetailController _con = new DeliveryOrdersDetailController();
+  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
 
   @override
   void initState() {
@@ -34,56 +45,64 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Orden #${widget.order.id ?? ''}'),
-        actions: [
-          Container(
-            margin: EdgeInsets.only(top: 18, right: 15),
-            height: 50,
-            child: Text(
-              'Local: ${_con.total.toStringAsFixed(2)}\$',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Orden #${widget.order.id ?? ''}'),
+          actions: [
+            Container(
+              margin: EdgeInsets.only(top: 18, right: 15),
+              height: 50,
+              child: widget.order.status == 'DESPACHADO'
+                  ? Text(
+                      'Local: ${_con.restaurantDistanceDelivery(widget.order)}',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    )
+                  : Text(
+                      'Cliente: ${widget.order.totalCliente!.toStringAsFixed(2)}',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+            )
+          ],
+        ),
+        bottomNavigationBar: Container(
+          height: MediaQuery.of(context).size.height * 0.4,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Divider(
+                  color: Colors.grey[400],
+                  endIndent: 30, // DERECHA
+                  indent: 30, //IZQUIERDA
+                ),
+                SizedBox(height: 10),
+                _userData(widget.order.client),
+
+                _textData('Fecha de pedido:',
+                    '${RelativeTimeUtil.getRelativeTime(widget.order.timestamp ?? 0)}'),
+                //    widget.order.status != 'ENTREGADO'
+                //        ? widget.order.status == 'DESPACHADO'
+                //            ? _textFieldPrice()
+                //            : Container()
+                //        : Container(),
+                widget.order.status != 'ENTREGADO' ? _buttonNext() : Container()
+              ],
             ),
-          )
-        ],
-      ),
-      bottomNavigationBar: Container(
-        height: MediaQuery.of(context).size.height * 0.4,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Divider(
-                color: Colors.grey[400],
-                endIndent: 30, // DERECHA
-                indent: 30, //IZQUIERDA
-              ),
-              SizedBox(height: 10),
-              _textData('Cliente:',
-                  '${widget.order.client.name ?? ''} ${widget.order.client.lastname ?? ''}'),
-              _textData(
-                  'Entregar en:', '${widget.order.address.address ?? ''}'),
-              _textData('Fecha de pedido:',
-                  '${RelativeTimeUtil.getRelativeTime(widget.order.timestamp ?? 0)}'),
-              //    widget.order.status != 'ENTREGADO'
-              //        ? widget.order.status == 'DESPACHADO'
-              //            ? _textFieldPrice()
-              //            : Container()
-              //        : Container(),
-              widget.order.status != 'ENTREGADO' ? _buttonNext() : Container()
-            ],
           ),
         ),
+        body: widget.order.productsOrder!.length != 0
+            ? ListView(
+                children: widget.order.productsOrder!
+                    .map((OrderProductModel product) {
+                  return _cardProduct(product);
+                }).toList(),
+              )
+            : NoDataWidget(
+                text: 'Ningun producto agregado',
+              ),
       ),
-      body: widget.order.products.length != 0
-          ? ListView(
-              children: widget.order.products.map((Product product) {
-                return _cardProduct(product);
-              }).toList(),
-            )
-          : NoDataWidget(
-              text: 'Ningun producto agregado',
-            ),
     );
   }
 
@@ -112,12 +131,12 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
 
           try {
             _con.updateOrder(newTotalClient);
-            if (widget.order.status == 'DESPACHADO') {
-              _con.createNotification();
-            }
+            _con.sendNotificationClient(widget.order.client.notificationToken!);
+            if (widget.order.status == 'DESPACHADO') {}
           } catch (e) {}
         },
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: widget.order.status == 'DESPACHADO'
                 ? Colors.blue
                 : Colors.green,
@@ -157,7 +176,7 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
     );
   }
 
-  Widget _cardProduct(Product product) {
+  Widget _cardProduct(OrderProductModel product) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
@@ -172,10 +191,6 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 10),
-              Text(
-                'Cantidad: ${product.quantity}',
-                style: TextStyle(fontSize: 13),
-              ),
             ],
           ),
         ],
@@ -183,7 +198,7 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
     );
   }
 
-  Widget _imageProduct(Product product) {
+  Widget _imageProduct(OrderProductModel product) {
     return Container(
       width: 50,
       height: 50,
@@ -198,6 +213,115 @@ class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
         placeholder: AssetImage('assets/img/no-image.png'),
       ),
     );
+  }
+
+  Widget _userData(User userData) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            //  width: MediaQuery.of(context).size.width * 0.7,
+            child: Row(
+              children: [
+                userData.image != null
+                    ? Container(
+                        width: 50,
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl:
+                                  userData.image != null && userData.image != ''
+                                      ? userData.image!
+                                      : urlRushImage,
+                              placeholder: (context, url) => Shimmer(
+                                  child: Container(
+                                color: Colors.black,
+                              )),
+                              imageBuilder: (context, image) => Image(
+                                image: image,
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(),
+                SizedBox(width: 5),
+                Text('${userData.name}')
+              ],
+            ),
+          ),
+          Container(
+            child: TextButton(
+                onPressed: () {
+                  _showContactMethod(userData);
+                },
+                child: Text('Contactar')),
+          )
+        ],
+      ),
+    );
+  }
+
+  _showContactMethod(User user) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return CupertinoAlertDialog(
+            title: Text('Contacta a ${user.name} '),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    openTelf(user.phone);
+                  },
+                  child: Text('Llamada')),
+              TextButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: user.phone))
+                        .then((value) {
+                      //only if ->
+                      Fluttertoast.showToast(
+                          msg: 'Texto Copiado'); // -> show a notification
+                    });
+                  },
+                  child: Text('Copiar número')),
+              TextButton(
+                  onPressed: () {
+                    _con.createChat(user);
+                  },
+                  child: Text('Chat'))
+            ],
+          );
+        });
+  }
+
+  openTelf(String? number) async {
+    var whatsappURlA = "tel://$number";
+    var whatappURLI = "tel://$number";
+    if (Platform.isIOS) {
+      // for iOS phone only
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatappURLI)) {
+        // ignore: deprecated_member_use
+        await launch(whatappURLI, forceSafariVC: false);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    } else {
+      // android , web
+      // ignore: deprecated_member_use
+      if (await canLaunch(whatsappURlA)) {
+        // ignore: deprecated_member_use
+        await launch(whatsappURlA);
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
+      }
+    }
   }
 
   void refresh() {

@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
+import 'package:jcn_delivery/src/models/chat.dart';
 import 'package:jcn_delivery/src/models/order.dart';
-
+import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
+import 'package:jcn_delivery/src/provider/chats_provider.dart';
 import 'package:jcn_delivery/src/provider/orders_provider.dart';
-import 'package:jcn_delivery/src/utils/my_colors.dart';
-
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -42,9 +42,9 @@ class ClientOrdersMapController {
   double deliverySpeed = 0.0;
 
   OrdersProvider _ordersProvider = new OrdersProvider();
-  User? user;
-  SharedPref _sharedPref = new SharedPref();
-
+  GeneralActions generalActions = Get.put(GeneralActions());
+  ChatProvider chatProvider = Get.put(ChatProvider());
+  User user = User.fromJson(GetStorage().read('user'));
   double? distanceBetween;
   IO.Socket? socket;
 
@@ -54,8 +54,7 @@ class ClientOrdersMapController {
     order = orderWidget;
     /* order = Order.fromJson(
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>);*/
-    deliveryMarker =
-        await createMarkerFromAsset('assets/iconApp/deliveryIcon.png');
+    deliveryMarker = await createMarkerFromAsset('assets/iconApp/logoMoto.png');
     homeMarker = await createMarkerFromAsset('assets/img/home.png');
 
     socket = IO.io(
@@ -75,13 +74,31 @@ class ClientOrdersMapController {
           'Tu repartidor: ${data['speed'].toStringAsFixed(0) + ' km/h'} ',
           '',
           deliveryMarker!,
-          (data['heading'] - 90));
+          0.0);
     });
 
-    user = User.fromJson(await _sharedPref.read('user'));
-    _ordersProvider.init(context, user!);
+    _ordersProvider.init(context, user);
     print('ORDEN: ${order.toJson()}');
     checkGPS();
+  }
+
+  void createChat(User userReceiver) async {
+    Chat chat = Chat(idUser1: user.id, idUser2: userReceiver.id);
+
+    bool exist = generalActions.chats.any((element) =>
+        (element.idUser1 == user.id && element.idUser2 == userReceiver.id) &&
+        (element.idUser1 == userReceiver.id && element.idUser2 == user.id));
+
+    if (exist == false) {
+      ResponseApi responseApi = await chatProvider.create(chat);
+
+      if (responseApi.success == true) {
+        Get.toNamed('/messages', arguments: {'user': userReceiver.toJson()});
+        //  Get.snackbar('Creado', responseApi.message ?? 'Error en la respuesta');
+      }
+    } else {
+      Get.toNamed('/messages', arguments: {'user': userReceiver.toJson()});
+    }
   }
 
   void isCloseToDeliveryPosition() {
@@ -89,7 +106,7 @@ class ClientOrdersMapController {
         _position!.longitude, order.address.lat!, order.address.lng!);
   }
 
-  Future<void> setPolylines(LatLng from, LatLng to) async {
+  /*Future<void> setPolylines(LatLng from, LatLng to) async {
     PointLatLng pointFrom = PointLatLng(from.latitude, from.longitude);
     PointLatLng pointTo = PointLatLng(to.latitude, to.longitude);
     PolylineResult result = await PolylinePoints().getRouteBetweenCoordinates(
@@ -108,7 +125,7 @@ class ClientOrdersMapController {
     polylines.add(polyline);
 
     refresh();
-  }
+  }*/
 
   void addMarker(String markerId, double lat, double lng, String title,
       String content, BitmapDescriptor iconMarker, double heading) {
@@ -197,10 +214,10 @@ class ClientOrdersMapController {
       addMarker('home', order.address.lat!, order.address.lng!,
           'Lugar de entrega', '', homeMarker!, 0.0);
 
-      LatLng from = new LatLng(order.lat!, order.lng!);
-      LatLng to = new LatLng(order.address.lat!, order.address.lng!);
+      //   LatLng from = new LatLng(order.lat!, order.lng!);
+      //   LatLng to = new LatLng(order.address.lat!, order.address.lng!);
 
-      setPolylines(from, to);
+      //  setPolylines(from, to);
 
       refresh();
     } catch (e) {

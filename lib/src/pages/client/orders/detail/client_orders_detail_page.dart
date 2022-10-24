@@ -1,12 +1,18 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcn_delivery/src/models/order.dart';
+import 'package:jcn_delivery/src/models/orderProductsModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/pages/client/orders/detail/client_orders_detail_controller.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
+import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ignore: must_be_immutable
@@ -21,6 +27,7 @@ class ClientOrdersDetailPage extends StatefulWidget {
 
 class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
   ClientOrdersDetailController _con = new ClientOrdersDetailController();
+  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
 
   @override
   void initState() {
@@ -33,161 +40,142 @@ class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.black,
-          title: Text('Orden # ${widget.order.id}'),
-          actions: [
-            Container(
-              margin: EdgeInsets.only(top: 18, right: 15),
-              child: Text(
-                '${widget.order.totalCliente?.toStringAsFixed(2)} \$',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text('Orden # ${widget.order.id}'),
+        actions: [
+          Container(
+            margin: EdgeInsets.only(top: 18, right: 15),
+            child: Text(
+              '${widget.order.totalCliente?.toStringAsFixed(2)} \$',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+          )
+        ],
+      ),
+      bottomNavigationBar: Container(
+        height: MediaQuery.of(context).size.height * 0.4,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Divider(
+                color: Colors.grey[400],
+                endIndent: 30, // DERECHA
+                indent: 30, //IZQUIERDA
               ),
-            )
-          ],
+              SizedBox(height: 10),
+              widget.order.delivery!.name != null &&
+                      widget.order.delivery!.name != ''
+                  ? _userData(widget.order.delivery!)
+                  : Container(),
+              _textData(
+                  'Entregar en:', '${widget.order.address.neighborhood ?? ''}'),
+              _textData('Orden creada:',
+                  '${RelativeTimeUtil.getTipicTime(widget.order.timestamp ?? 0)}'),
+              widget.order.status == 'EN CAMINO' ? _buttonNext() : Container()
+            ],
+          ),
         ),
-        bottomNavigationBar: Container(
-          height: MediaQuery.of(context).size.height * 0.4,
-          child: SingleChildScrollView(
-            child: Column(
+      ),
+      body: widget.order.productsOrder?.length != 0
+          ? ListView(
+              children:
+                  widget.order.productsOrder!.map((OrderProductModel product) {
+                return _cardProduct(product);
+              }).toList(),
+            )
+          : NoDataWidget(
+              text: 'Ningun producto agregado',
+            ),
+    );
+  }
+
+  Widget _userData(User userData) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            //  width: MediaQuery.of(context).size.width * 0.7,
+            child: Row(
               children: [
-                Divider(
-                  color: Colors.grey[400],
-                  endIndent: 30, // DERECHA
-                  indent: 30, //IZQUIERDA
-                ),
-                SizedBox(height: 10),
-                widget.order.delivery?.name != null
-                    ? ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage:
-                              NetworkImage(widget.order.delivery?.image ?? ""),
-                        ),
-                        trailing: Container(
-                          height: 50,
-                          width: MediaQuery.of(context).size.width * 0.3,
-                          child: TextButton(
-                            onPressed: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                        title:
-                                            Text('Contactar al repartidor/a'),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            CircleAvatar(
-                                              backgroundImage: NetworkImage(
-                                                  _con.order.delivery?.image ??
-                                                      ""),
-                                            ),
-                                            Text(
-                                                '${widget.order.delivery?.name ?? 'Asignando..'} ${widget.order.delivery?.lastname ?? ''}'),
-                                          ],
-                                        ),
-                                        actions: [
-                                          Column(
-                                            children: [
-                                              TextButton(
-                                                  onPressed: () {
-                                                    openwhatsapp(widget
-                                                        .order.delivery!.phone);
-                                                  },
-                                                  child: Text(
-                                                    'WhatsApp',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Colors.greenAccent),
-                                                  )),
-                                              TextButton(
-                                                  onPressed: () {
-                                                    openTelf(widget
-                                                        .order.delivery?.phone);
-                                                  },
-                                                  child: Text('Llamada')),
-                                              TextButton(
-                                                  onPressed: () {
-                                                    Clipboard.setData(
-                                                            ClipboardData(
-                                                                text: widget
-                                                                    .order
-                                                                    .delivery
-                                                                    ?.phone))
-                                                        .then((value) {
-                                                      //only if ->
-                                                      Fluttertoast.showToast(
-                                                          msg:
-                                                              'Texto Copiado'); // -> show a notification
-                                                    });
-                                                  },
-                                                  child: Text('Copiar número'))
-                                            ],
-                                          )
-                                        ]);
-                                  });
-                            },
-                            child: Text(
-                              'Contactar',
-                              style: TextStyle(color: Colors.green),
+                userData.image != null
+                    ? Container(
+                        width: 50,
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl:
+                                  userData.image != null && userData.image != ''
+                                      ? userData.image!
+                                      : urlRushImage,
+                              placeholder: (context, url) => Shimmer(
+                                  child: Container(
+                                color: Colors.black,
+                              )),
+                              imageBuilder: (context, image) => Image(
+                                image: image,
+                                fit: BoxFit.fill,
+                              ),
                             ),
                           ),
                         ),
-                        title: Text(
-                            '${widget.order.delivery?.name ?? 'Asignando..'} ${widget.order.delivery?.lastname ?? ''}'),
-                        subtitle: Text(
-                          'Repartidor/a',
-                          maxLines: 2,
-                        ),
                       )
                     : Container(),
-                _textData('Entregar en:',
-                    '${widget.order.address.neighborhood ?? ''}'),
-                _textData('Orden creada:',
-                    '${RelativeTimeUtil.getTipicTime(widget.order.timestamp ?? 0)}'),
-                widget.order.status == 'EN CAMINO' ? _buttonNext() : Container()
+                SizedBox(width: 5),
+                Text('${userData.name}')
               ],
             ),
           ),
-        ),
-        body: ListView(
-          children: widget.order.products.map((Product product) {
-            return _cardProduct(product);
-          }).toList(),
-        ));
+          Container(
+            child: TextButton(
+                onPressed: () {
+                  _showContactMethod(userData);
+                },
+                child: Text('Contactar')),
+          )
+        ],
+      ),
+    );
+  }
+
+  _showContactMethod(User user) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return CupertinoAlertDialog(
+            title: Text('Contacta a ${user.name} '),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    openTelf(user.phone);
+                  },
+                  child: Text('Llamada')),
+              TextButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: user.phone))
+                        .then((value) {
+                      //only if ->
+                      Fluttertoast.showToast(
+                          msg: 'Texto Copiado'); // -> show a notification
+                    });
+                  },
+                  child: Text('Copiar número')),
+              TextButton(
+                  onPressed: () {
+                    _con.createChat(user);
+                  },
+                  child: Text('Chat'))
+            ],
+          );
+        });
   }
 
   openTelf(String? number) async {
     var whatsappURlA = "tel://$number";
     var whatappURLI = "tel://$number";
-    if (Platform.isIOS) {
-      // for iOS phone only
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatappURLI)) {
-        // ignore: deprecated_member_use
-        await launch(whatappURLI, forceSafariVC: false);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    } else {
-      // android , web
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatsappURlA)) {
-        // ignore: deprecated_member_use
-        await launch(whatsappURlA);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    }
-  }
-
-  openwhatsapp(String? number) async {
-    var whatsapp = number;
-    var whatsappURlA =
-        "whatsapp://send?phone=" + "+593" + number! + "&text=hello";
-    var whatappURLI = "https://wa.me/$whatsapp?text=${Uri.parse("hello")}";
     if (Platform.isIOS) {
       // for iOS phone only
       // ignore: deprecated_member_use
@@ -231,6 +219,7 @@ class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
       child: ElevatedButton(
         onPressed: _con.updateOrder,
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: Colors.blue,
             padding: EdgeInsets.symmetric(vertical: 5),
             shape: RoundedRectangleBorder(
@@ -266,7 +255,7 @@ class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
     );
   }
 
-  Widget _cardProduct(Product product) {
+  Widget _cardProduct(OrderProductModel product) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
@@ -297,7 +286,7 @@ class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
     );
   }
 
-  Widget _imageProduct(Product product) {
+  Widget _imageProduct(OrderProductModel product) {
     return Container(
       width: 50,
       height: 50,
@@ -305,11 +294,11 @@ class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
       decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(20)),
           color: Colors.grey[200]),
-      child: FadeInImage(
-        image: NetworkImage(product.image1!),
+      child: FadeInImage.assetNetwork(
+        image: product.image1 ?? 'https://i.ibb.co/7V3mqx4/logoIOS.png',
         fit: BoxFit.contain,
         fadeInDuration: Duration(milliseconds: 50),
-        placeholder: AssetImage('assets/img/no-image.png'),
+        placeholder: 'assets/img/no-image.png',
       ),
     );
   }

@@ -1,36 +1,36 @@
-import 'dart:async';
 import 'dart:convert';
+import 'dart:core';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get/get.dart';
 import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 
-class PushNotificationsProvider {
-  late AndroidNotificationChannel channel;
-  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+class PushNotificationsProvider extends GetConnect {
+  AndroidNotificationChannel globalchannel = AndroidNotificationChannel(
+      'global_channel', 'Notificaciones Globales',
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('general'),
+      importance: Importance.high);
+
+  AndroidNotificationChannel specificchannel = AndroidNotificationChannel(
+      'specific_channel', 'Notificaciones Importantes',
+      importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('partner'));
+  FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
 
   void initPushNotifications() async {
-    channel = const AndroidNotificationChannel(
-      'high_importance_channel', // id
-      'High Importance Notifications', // title
-      'This channel is used for important notifications.', // description
-      importance: Importance.high,
-    );
-
-    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-    /// Create an Android Notification Channel.
-    ///
-    /// We use this channel in the `AndroidManifest.xml` file to override the
-    /// default FCM channel to enable heads up notifications.
-    await flutterLocalNotificationsPlugin
+    await plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
+        ?.createNotificationChannel(globalchannel);
+    await plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(specificchannel);
 
-    /// Update the iOS foreground notification presentation options to allow
-    /// heads up notifications.
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
       alert: true,
@@ -43,25 +43,7 @@ class PushNotificationsProvider {
     FirebaseMessaging.instance.getInitialMessage();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('NUEVA NOTIFICACION EN PRIMER PLANO');
-
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
-      if (notification != null && android != null) {
-        flutterLocalNotificationsPlugin.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
-            NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channel.description,
-                //      one that already exists in example app.
-                icon: '@mipmap/launcher_icon',
-              ),
-            ));
-      }
+      showNotification(message);
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
@@ -71,8 +53,37 @@ class PushNotificationsProvider {
 
   void saveToken(String idUser) async {
     String? token = await FirebaseMessaging.instance.getToken();
-    UsersProvider usersProvider = new UsersProvider();
-    await usersProvider.updateNotificationToken(idUser, token!);
+    UsersProvider usersProvider = UsersProvider();
+    if (token != null) {
+      await usersProvider.updateNotificationToken(idUser, token);
+    }
+  }
+
+  void showNotification(RemoteMessage message) async {
+    AndroidNotificationDetails? androidPlatformChannelSpecifics;
+
+    if (message.data['url'] == 'global') {
+      androidPlatformChannelSpecifics = AndroidNotificationDetails(
+          globalchannel.id, globalchannel.name,
+          playSound: true, icon: 'mipmap/logofly');
+    } else if (message.data['url'] == 'specific') {
+      androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        specificchannel.id,
+        specificchannel.name,
+        icon: 'mipmap/logofly',
+        playSound: true,
+      );
+    } else {
+      androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        globalchannel.id,
+        globalchannel.name,
+        icon: 'mipmap/logofly',
+        playSound: false,
+      );
+    }
+
+    plugin.show(1, message.data['title'], message.data['body'],
+        NotificationDetails(android: androidPlatformChannelSpecifics));
   }
 
   Future<void> sendMessage(
@@ -87,10 +98,36 @@ class PushNotificationsProvider {
               'key=AAAAsL4c97c:APA91bHhEqCMi5t4LvD24Vlh0qIvSXiMqL4u7m8d8gKM89-JsjjoApjixu6eVAiPEZjlguHSacVMH87a2bgSKBhFf7WmBRwKtSD7Vb3wLvgzvwjBVIkjsOQNPfZLoQ5s3J7clghxlEHL'
         },
         body: jsonEncode(<String, dynamic>{
+          'click_action': 'FLUTTER_NOTIFICATION_CLICK',
           'notification': <String, dynamic>{
+            'android_channel_id': 'global_channel',
+            'body': body,
+            'title': title
+          },
+          'priority': 'high',
+          'ttl': '4500s',
+          'data': data,
+          'to': to
+        }));
+  }
+
+  Future<void> sendOrders(
+      String to, Map<String, dynamic> data, String title, String body) async {
+    Uri url = Uri.https('fcm.googleapis.com', '/fcm/send');
+    print('mandando mensaje');
+
+    await http.post(url,
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization':
+              'key=AAAAsL4c97c:APA91bHhEqCMi5t4LvD24Vlh0qIvSXiMqL4u7m8d8gKM89-JsjjoApjixu6eVAiPEZjlguHSacVMH87a2bgSKBhFf7WmBRwKtSD7Vb3wLvgzvwjBVIkjsOQNPfZLoQ5s3J7clghxlEHL'
+        },
+        body: jsonEncode(<String, dynamic>{
+          'notification': <String, dynamic>{
+            'android_channel_id': 'specific_channel',
             'body': body,
             'title': title,
-            'sound': 'default'
+            'sound': 'partner.wav'
           },
           'priority': 'high',
           'ttl': '4500s',

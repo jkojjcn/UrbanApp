@@ -16,11 +16,12 @@ class User {
   String? sessionToken;
   String? notificationToken;
   String? image;
-  List<Rol>? roles = [];
+  bool? isAvailable;
+  List<Rol>? roles;
   List<User> toList = [];
+  String? caja;
 
   //MESSAGES
-  
 
   User(
       {this.id,
@@ -31,24 +32,41 @@ class User {
       this.password,
       this.sessionToken,
       this.notificationToken,
-     this.image,
+      this.image,
+      this.isAvailable,
+      this.caja,
       this.roles});
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json["id"] is int ? json['id'].toString() : json["id"],
-        name: json["name"],
-        lastname: json["lastname"],
-        email: json["email"],
-        phone: json["phone"],
-        password: json["password"],
-        sessionToken: json["session_token"],
-        notificationToken: json["notification_token"],
-        image: json["image"],
-        roles: json["roles"] == null
-            ? []
-            : List<Rol>.from(
-                    json['roles'].map((model) => Rol.fromJson(model))),
-      );
+      id: json["id"] is int ? json['id'].toString() : json["id"],
+      name: json["name"] ?? '',
+      lastname: json["lastname"] ?? '',
+      email: json["email"] ?? '',
+      phone: json["phone"] ?? '',
+      password: json["password"] ?? '',
+      sessionToken: json["session_token"] ?? '',
+      notificationToken: json["notification_token"] ?? '',
+      image: json["image"] ?? '',
+      isAvailable: json["is_available"] ?? false,
+      caja: json["caja"].toString(),
+      roles: json['roles'] != null && json['roles'] != 'null'
+          ? json['roles'] is String
+              ? List<Rol>.from(jsonDecode(json['roles'])
+                  .map((model) => Rol.fromJson(model))
+                  .toList())
+              : List<Rol>.from(
+                  json['roles'].map((model) => Rol.fromJson(model)).toList())
+          : []);
+
+  static List<User> fromJsonGetxList(List<dynamic> jsonList) {
+    List<User> toListG = [];
+
+    jsonList.forEach((item) {
+      User user = User.fromJson(item);
+      toListG.add(user);
+    });
+    return toListG;
+  }
 
   User.fromJsonList(List<dynamic> jsonList) {
     // ignore: unnecessary_null_comparison
@@ -69,6 +87,8 @@ class User {
         "session_token": sessionToken,
         "notification_token": notificationToken,
         "image": image,
-        "roles": roles,
+        "is_available": isAvailable,
+        "caja": caja,
+        "roles": jsonEncode(roles)
       };
 }

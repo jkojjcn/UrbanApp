@@ -1,16 +1,22 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:jcn_delivery/src/models/order.dart';
+import 'package:jcn_delivery/src/models/orderProductsModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/models/restaurant.dart';
 import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_controller.dart';
 import 'package:jcn_delivery/src/pages/client/orders/create/client_orders_create_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
+import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 
 // ignore: must_be_immutable
 class ClientOrdersCreatePage extends StatefulWidget {
-  Product? restaurant;
+  Restaurant? restaurant;
   ClientOrdersCreatePage({Key? key, this.restaurant}) : super(key: key);
 
   @override
@@ -19,14 +25,21 @@ class ClientOrdersCreatePage extends StatefulWidget {
 
 class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
   ClientOrdersCreateController _con = new ClientOrdersCreateController();
-  ClientAddressListController _conO = new ClientAddressListController();
+
+  GeneralActions con = Get.put(GeneralActions());
+  bool requieredCard = false;
+  bool colorBool = false;
 
   @override
   void initState() {
+    if (widget.restaurant!.price! >= 7) {
+      requieredCard = true;
+      colorBool = true;
+    }
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
-      _con.init(context, refresh);
-      _conO.init(context, refresh);
+      _con.init(context);
+      _con.init(context);
     });
   }
 
@@ -34,7 +47,6 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
       MaterialStateProperty.all<Color>(Colors.white);
   MaterialStateProperty<Color> colorB =
       MaterialStateProperty.all<Color>(Colors.green);
-  bool colorBool = false;
 
   @override
   Widget build(BuildContext context) {
@@ -57,16 +69,17 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                 endIndent: 30, // DERECHA
                 indent: 30, //IZQUIERDA
               ),
-              _con.selectedProducts.length > 0
+              con.listProductsOrder.length > 0
                   ? _textTotalPrice()
                   : Container(),
-              _con.selectedProducts.length > 0 ? _buttonNext() : Container()
+              con.listProductsOrder.length > 0 ? _buttonNext() : Container()
             ],
           ),
         ),
-        body: _con.selectedProducts.length > 0
+        body: con.listProductsOrder.length > 0
             ? ListView(
-                children: _con.selectedProducts.map((Product product) {
+                children:
+                    con.listProductsOrder.map((OrderProductModel product) {
                   //   print('sabor es ${product.sabores}');
                   return _cardProduct(product);
                 }).toList(),
@@ -84,18 +97,20 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
       child: ElevatedButton(
         onPressed: () {
           Fluttertoast.showToast(msg: 'Gracias por tu compra <3');
-          _conO.createOrder(
+          _con.createOrder(
               widget.restaurant?.name,
               widget.restaurant?.price,
               widget.restaurant?.notificationTokenR,
+              widget.restaurant?.masterNotificationToken,
               colorBool,
-              (_con.total + _con.distanciaDelivery!),
-              (((_con.total + _con.distanciaDelivery!) * 0.08) +
-                  (_con.total + _con.distanciaDelivery!)));
+              (_con.total + widget.restaurant!.price!),
+              (((_con.total + widget.restaurant!.price!) * 0.08) +
+                  (_con.total + widget.restaurant!.price!)));
 
           // _con.goToAddress(widget.restaurant);
         },
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: MyColors.primaryColor,
             padding: EdgeInsets.symmetric(vertical: 2),
             shape: RoundedRectangleBorder(
@@ -125,7 +140,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     );
   }
 
-  Widget _cardProduct(Product? product) {
+  Widget _cardProduct(OrderProductModel? product) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
@@ -149,8 +164,9 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
               Container(
                 width: MediaQuery.of(context).size.width * 0.45,
                 child: Text(
-                  product.sabores == "[]" ? "" : product.sabores!,
-                  maxLines: 2,
+                  product.features == "[]" ? "" : product.features ?? '',
+                  maxLines: 3,
+                  style: TextStyle(fontSize: 10),
                   overflow: TextOverflow.ellipsis,
                 ),
               )
@@ -167,11 +183,11 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     );
   }
 
-  Widget _iconDelete(Product product) {
+  Widget _iconDelete(OrderProductModel product) {
     return IconButton(
         onPressed: () {
           _con.deleteItem(product);
-          _con.init(context, refresh);
+          refresh();
         },
         icon: Icon(
           Icons.delete,
@@ -180,6 +196,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
   }
 
   Widget _textTotalPrice() {
+    _con.getTotal();
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
       child: Column(
@@ -187,21 +204,24 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                  //    width: MediaQuery.of(context).size.width * 0.5,
-                  child: TextButton(
-                      style: ButtonStyle(backgroundColor: colorB),
-                      onPressed: () {
-                        colorBool = false;
-                        colorA =
-                            MaterialStateProperty.all<Color>(Colors.grey[350]!);
-                        colorB = MaterialStateProperty.all<Color>(Colors.green);
-                        setState(() {});
-                      },
-                      child: Text(
-                        'Efectivo',
-                        style: TextStyle(color: Colors.black),
-                      ))),
+              !requieredCard
+                  ? Container(
+                      //    width: MediaQuery.of(context).size.width * 0.5,
+                      child: TextButton(
+                          style: ButtonStyle(backgroundColor: colorB),
+                          onPressed: () {
+                            colorBool = false;
+                            colorA = MaterialStateProperty.all<Color>(
+                                Colors.grey[350]!);
+                            colorB =
+                                MaterialStateProperty.all<Color>(Colors.green);
+                            setState(() {});
+                          },
+                          child: Text(
+                            'Efectivo',
+                            style: TextStyle(color: Colors.black),
+                          )))
+                  : Container(),
               colorBool
                   ? FadeInRight(
                       duration: Duration(milliseconds: 400),
@@ -210,21 +230,45 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                       duration: Duration(milliseconds: 400),
                       child: Icon(Icons.payments)),
 
-              Container(
-                  //   width: MediaQuery.of(context).size.width * 0.5,
-                  child: TextButton(
-                      style: ButtonStyle(backgroundColor: colorA),
-                      onPressed: () {
-                        colorBool = true;
-                        colorA = MaterialStateProperty.all<Color>(Colors.green);
-                        colorB =
-                            MaterialStateProperty.all<Color>(Colors.grey[350]!);
-                        setState(() {});
-                      },
-                      child: Text(
-                        'Tarjeta',
-                        style: TextStyle(color: Colors.black),
-                      )))
+              !requieredCard
+                  ? Container(
+                      //   width: MediaQuery.of(context).size.width * 0.5,
+                      child: TextButton(
+                          style: ButtonStyle(backgroundColor: colorA),
+                          onPressed: () {
+                            setState(() {
+                              colorBool = true;
+                              colorA = MaterialStateProperty.all<Color>(
+                                  Colors.green);
+                              colorB = MaterialStateProperty.all<Color>(
+                                  Colors.grey[350]!);
+                            });
+                            //  Get.toNamed(
+                            //    '/payphone',
+                            //  );
+
+                            showCupertinoDialog(
+                                context: context,
+                                builder: (context) {
+                                  return CupertinoAlertDialog(
+                                    title: Text(
+                                        'Luego de crear el pedido, nuestro equipo le enviará un link de pago por nuestro chat.'),
+                                    content: Icon(Icons.mail),
+                                    actions: [
+                                      CupertinoDialogAction(
+                                          child: Text("Confirmar"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          }),
+                                    ],
+                                  );
+                                });
+                          },
+                          child: Text(
+                            'Tarjeta',
+                            style: TextStyle(color: Colors.black),
+                          )))
+                  : Container()
               //   Switch(value: false, onChanged: (onChanged) {})
             ],
           ),
@@ -234,9 +278,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
               Container(
                 //   width: MediaQuery.of(context).size.width * 1,
                 child: Text(
-                  colorBool
-                      ? 'Enviaremos un link de pago.'
-                      : 'Pago en efectivo',
+                  colorBool ? 'Pago con tarjeta.' : 'Pago en efectivo',
                   style: TextStyle(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 3,
@@ -244,27 +286,31 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
               )
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
             children: [
-              Text(
-                'Subtotal:',
-                style: TextStyle(fontSize: 15),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Subtotal:',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                  Text(
+                    '${_con.total.toStringAsFixed(2)}\$',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ],
               ),
-              Text(
-                '${_con.total.toStringAsFixed(2)}\$',
-                style: TextStyle(fontSize: 15),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Repartidor:',
+                    style: TextStyle(fontSize: 15),
+                  ),
+                  Text('${widget.restaurant!.price!.toStringAsFixed(2)}\$')
+                ],
               ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Repartidor:',
-                style: TextStyle(fontSize: 15),
-              ),
-              _con.restaurantDistance(widget.restaurant?.price)
             ],
           ),
           Column(
@@ -278,7 +324,7 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                           style: TextStyle(fontSize: 15),
                         ),
                         Text(
-                          '${((_con.total + _con.distanciaDelivery!) * 0.08).toStringAsFixed(2)}\$',
+                          '${((_con.total + widget.restaurant!.price!) * 0.08).toStringAsFixed(2)}\$',
                         ),
                       ],
                     )
@@ -294,12 +340,12 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
                     ),
                     !colorBool
                         ? Text(
-                            '${(_con.total + _con.distanciaDelivery!).toStringAsFixed(2)}\$',
+                            '${(_con.total + widget.restaurant!.price!).toStringAsFixed(2)}\$',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 20),
                           )
                         : Text(
-                            '${(((_con.total + _con.distanciaDelivery!) * 0.08) + (_con.total + _con.distanciaDelivery!)).toStringAsFixed(2)}\$',
+                            '${(((_con.total + widget.restaurant!.price!) * 0.08) + (_con.total + widget.restaurant!.price!)).toStringAsFixed(2)}\$',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 20),
                           ),
@@ -313,17 +359,17 @@ class _ClientOrdersCreatePageState extends State<ClientOrdersCreatePage> {
     );
   }
 
-  Widget _textPrice(Product product) {
+  Widget _textPrice(OrderProductModel product) {
     return Container(
       margin: EdgeInsets.only(top: 10),
       child: Text(
-        '\$ ${(product.price! * product.quantity!).toStringAsFixed(2)}',
+        '\$ ${(product.price! * 1).toStringAsFixed(2)}',
         style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _imageProduct(Product product) {
+  Widget _imageProduct(OrderProductModel product) {
     return Container(
       width: 90,
       height: 90,

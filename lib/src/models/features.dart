@@ -1,8 +1,7 @@
 import 'dart:convert';
+import 'package:jcn_delivery/src/models/sabores.dart';
 
-import 'package:jcn_delivery/src/models/features/sabores.dart';
-
-Features productFromJson(String str) => Features.fromJson(json.decode(str));
+Features featureFromJson(String str) => Features.fromJson(json.decode(str));
 
 String productToJson(Features data) => json.encode(data.toJson());
 
@@ -12,19 +11,27 @@ class Features {
   String? description;
   int? max;
   int? min;
-  List<dynamic>? content;
+  bool? addInProduct = false;
+  List<Sabores>? content;
 
   List<Features> toListFeatures = [];
-  List<FeaturesSabores> toListFeaturesSabores = [];
 
   Features(
-      {this.id, this.name, this.description, this.content, this.max, this.min});
+      {this.id,
+      this.name,
+      this.description,
+      this.content,
+      this.max,
+      this.min,
+      this.addInProduct});
 
   factory Features.fromJson(Map<String, dynamic> json) => Features(
       id: json["id"],
       name: (json["name"]) ?? "...",
       description: (json["description"]) ?? "....",
-      content: json["content"],
+      content: json["content"] != null
+          ? List<Sabores>.from(Sabores.fromJsonList(json["content"]).toList)
+          : [],
       max: json["max"],
       min: json["min"]);
 
@@ -43,7 +50,8 @@ class Features {
         "description": description,
         "content": content,
         "max": max,
-        "min": min
+        "min": min,
+        "addInProduct": addInProduct
       };
 
   static bool isInteger(num value) =>

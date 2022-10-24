@@ -1,14 +1,19 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/pages/client/orders/detail/client_orders_detail_page.dart';
 import 'package:jcn_delivery/src/provider/orders_provider.dart';
+import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class ClientOrdersListController {
   late BuildContext context;
-  SharedPref _sharedPref = new SharedPref();
+
   GlobalKey<ScaffoldState> key = new GlobalKey<ScaffoldState>();
   late Function refresh;
   late User user;
@@ -21,13 +26,17 @@ class ClientOrdersListController {
   Future init(BuildContext context, Function refresh) async {
     this.context = context;
     this.refresh = refresh;
-    user = User.fromJson(await _sharedPref.read('user'));
+    user = User.fromJson(GetStorage().read('user'));
+
+    log('Inicio de orden init');
 
     _ordersProvider.init(context, user);
     refresh();
   }
 
   Future<List<Order>> getOrders(String status) async {
+    log('Intentando traer las ordenes');
+
     return await _ordersProvider.getByClientAndStatus(status);
   }
 
@@ -36,21 +45,27 @@ class ClientOrdersListController {
         context: context,
         builder: (context) => ClientOrdersDetailPage(order: order));
 
-    if (isUpdated!) {
+    if (isUpdated ?? false) {
       refresh();
     }
   }
 
-  void logout() {
-    _sharedPref.logout(context, user.id!);
+  void logout() async {
+    UsersProvider usersProvider = new UsersProvider();
+    usersProvider.init(
+      context,
+    );
+    await usersProvider.logout(user.id!);
+    GetStorage().remove('user');
+    Get.offNamedUntil('/login', (route) => false);
   }
 
   void goToCategoryCreate() {
-    Navigator.pushNamed(context, 'restaurant/categories/create');
+    Get.toNamed('/restaurant/categories/create');
   }
 
   void goToProductCreate() {
-    Navigator.pushNamed(context, 'restaurant/products/create');
+    Get.toNamed('/restaurant/products/create');
   }
 
   void openDrawer() {
@@ -58,6 +73,6 @@ class ClientOrdersListController {
   }
 
   void goToRoles() {
-    Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
+    Get.offAllNamed('/roles');
   }
 }

@@ -1,16 +1,22 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
 import 'package:jcn_delivery/src/models/order.dart';
+import 'package:jcn_delivery/src/models/orderProductsModel.dart';
 import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/pages/client/products/list/client_products_list_controller.dart';
 import 'package:jcn_delivery/src/pages/restaurant/orders/detail/restaurant_orders_detail_controller.dart';
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
+import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -32,6 +38,7 @@ class _RestaurantOrdersDetailPageState
   ClientProductsListController _clientProductsListController =
       new ClientProductsListController();
   double _value = 10.0;
+  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
 
   @override
   void initState() {
@@ -39,7 +46,7 @@ class _RestaurantOrdersDetailPageState
     SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
       _con.init(context, refresh, widget.order);
       _clientProductsListController.init(
-          context, refresh, widget.order.restaurant!.id!);
+          context, refresh, widget.order.restaurant?.id ?? '');
     });
   }
 
@@ -55,11 +62,15 @@ class _RestaurantOrdersDetailPageState
               'Total: ${_con.total.toStringAsFixed(2)}\$',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
-          )
+          ),
+          widget.order.tarjeta == 'Si'
+              ? Align(
+                  alignment: Alignment.topRight, child: Icon(Icons.credit_card))
+              : Container()
         ],
       ),
       bottomNavigationBar: Container(
-        height: MediaQuery.of(context).size.height * 0.5,
+        height: MediaQuery.of(context).size.height * 0.3,
         child: SingleChildScrollView(
           child: Column(
             children: [
@@ -71,141 +82,47 @@ class _RestaurantOrdersDetailPageState
               SizedBox(height: 10),
               _textDescription(),
               SizedBox(height: 15),
-              widget.order.status != 'PAGADO' ? _deliveryData() : Container(),
-              _con.productsAvariable.length == 0
-                  ? (widget.order.status == 'PAGADO'
-                      ? _countDownTimer()
-                      : Container())
-                  : FloatingActionButton.extended(
-                      heroTag: 'ChangeProduct',
-                      onPressed: () {
-                        showDialog(
-                            context: context,
-                            builder: (_) {
-                              return AlertDialog(
-                                title: Text('Cambiar Producto'),
-                                content: Text(
-                                    'Afirmo que el cliente conoce del cambio o eliminación de producto de esta orden. \n - Puede demorar hasta 5 min el cambio. \n - Unicamente con los productos registrados.'),
-                                actions: [
-                                  Column(
-                                    children: [
-                                      TextButton(
-                                          onPressed: () {
-                                            openwhatsapp('0998041037');
-                                          },
-                                          child: Text(
-                                            'Solicitar por Whatsapp',
-                                            style:
-                                                TextStyle(color: Colors.orange),
-                                          )),
-                                      TextButton(
-                                          onPressed: () {
-                                            openTelf('0998041037');
-                                          },
-                                          child: Text(
-                                            'Solicitar por llamada',
-                                            style:
-                                                TextStyle(color: Colors.orange),
-                                          )),
-                                      TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text('Cancelar'))
-                                    ],
-                                  )
-                                ],
-                              );
-                            });
-                      },
-                      label: Text('Solicitar cambio de producto')),
-
-              //   widget.order.status == 'PAGADO'
-              //      ? _dropDown(_con.users)
-              //     : Container(),
-              _textData('Cliente:',
-                  '${widget.order.client.name} ${widget.order.client.lastname}'),
-              _textData('Entregar en:', '${widget.order.address.address}'),
-              _textData('Fecha de pedido:',
-                  '${RelativeTimeUtil.getTipicTime(widget.order.timestamp!)}'),
-              widget.order.status == 'PAGADO' ? _buttonNext() : Container(),
-              Text('CONTACTOS'),
+              widget.order.status != 'PAGADO'
+                  ? widget.order.delivery!.name != null &&
+                          widget.order.delivery!.name != ''
+                      ? _userData(widget.order.delivery!)
+                      : Container()
+                  : Container(),
+              Text(
+                'Cliente',
+                style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: MyColors.primaryColor,
+                    fontSize: 16),
+              ),
+              (widget.order.status == 'PAGADO'
+                  ? _countDownTimer()
+                  : Container()),
+              _userData(widget.order.client),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Column(
-                    children: [
-                      Text('CLIENTE'),
-                      TextButton(
-                          onPressed: () {
-                            openwhatsapp(widget.order.client.phone);
-                          },
-                          child: Text(
-                            'WhatsApp',
-                            style: TextStyle(color: Colors.greenAccent),
-                          )),
-                      TextButton(
-                          onPressed: () {
-                            openTelf(widget.order.client.phone);
-                          },
-                          child: Text('Llamada')),
-                      TextButton(
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(
-                                    text: widget.order.client.phone))
-                                .then((value) {
-                              //only if ->
-                              Fluttertoast.showToast(
-                                  msg:
-                                      'Texto Copiado'); // -> show a notification
-                            });
-                          },
-                          child: Text('Copiar número'))
-                    ],
-                  ),
-                  Container(height: 120, width: 1, color: Colors.black),
-                  Column(
-                    children: [
-                      Text('REPARTIDOR/A'),
-                      TextButton(
-                          onPressed: () {
-                            openwhatsapp(widget.order.delivery!.phone!);
-                          },
-                          child: Text(
-                            'WhatsApp',
-                            style: TextStyle(color: Colors.greenAccent),
-                          )),
-                      TextButton(
-                          onPressed: () {
-                            openTelf(widget.order.delivery!.phone!);
-                          },
-                          child: Text('Llamada')),
-                      TextButton(
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(
-                                    text: widget.order.delivery!.phone!))
-                                .then((value) {
-                              //only if ->
-                              Fluttertoast.showToast(
-                                  msg:
-                                      'Texto Copiado'); // -> show a notification
-                            });
-                          },
-                          child: Text('Copiar número'))
-                    ],
-                  )
+                  Icon(Icons.timelapse_rounded),
+                  Text(
+                      '${RelativeTimeUtil.getTipicTime(widget.order.timestamp!)}')
                 ],
-              )
+              ),
+              widget.order.status == 'PAGADO' ? _buttonNext() : Container(),
             ],
           ),
         ),
       ),
-      body: widget.order.products.length > 0
-          ? ListView(
-              children: widget.order.products.map((Product product) {
-                return _cardProduct(product);
-              }).toList(),
-            )
+      body: widget.order.productsOrder != null
+          ? widget.order.productsOrder!.length > 0
+              ? ListView(
+                  children: widget.order.productsOrder!
+                      .map((OrderProductModel product) {
+                    return _cardProduct(product);
+                  }).toList(),
+                )
+              : NoDataWidget(
+                  text: 'Ningun producto agregado',
+                )
           : NoDataWidget(
               text: 'Ningun producto agregado',
             ),
@@ -236,7 +153,7 @@ class _RestaurantOrdersDetailPageState
       alignment: Alignment.centerLeft,
       margin: EdgeInsets.symmetric(horizontal: 30),
       child: Text(
-        widget.order.status == 'PAGADO' ? 'Tiempo de preparación ' : 'Delivery',
+        widget.order.status == 'PAGADO' ? 'Tiempo de preparación ' : '',
         style: TextStyle(
             fontStyle: FontStyle.italic,
             color: MyColors.primaryColor,
@@ -271,144 +188,87 @@ class _RestaurantOrdersDetailPageState
     }
   }
 
-  openwhatsapp(String? number) async {
-    var whatsapp = number;
-    var whatsappURlAndroid =
-        "whatsapp://send?phone=" + "+593" + number! + "&text=hello";
-    var whatappURLIos = "https://wa.me/$whatsapp?text=${Uri.parse("hello")}";
-    if (Platform.isIOS) {
-      // for iOS phone only
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatappURLIos)) {
-        // ignore: deprecated_member_use
-        await launch(whatappURLIos, forceSafariVC: false);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    } else {
-      // android , web
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatsappURlAndroid)) {
-        // ignore: deprecated_member_use
-        await launch(whatsappURlAndroid);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    }
-  }
-
-/*
-  Widget _dropDown(List<User> users) {
+  Widget _userData(User userData) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-      child: Material(
-        elevation: 2.0,
-        color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(5)),
-        child: Container(
-          padding: EdgeInsets.all(0),
-          child: Column(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: DropdownButton(
-                  underline: Container(
-                    alignment: Alignment.centerRight,
-                    child: Icon(
-                      Icons.arrow_drop_down_circle,
-                      color: MyColors.primaryColor,
-                    ),
-                  ),
-                  elevation: 3,
-                  isExpanded: true,
-                  hint: Text(
-                    'Repartidores',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                  items: _dropDownItems(users),
-                  value: _con.idDelivery,
-                  onChanged: (option) {
-                    setState(() {
-                      print('Reparidor selecciondo $option');
-                      _con.idDelivery =
-                          option; // ESTABLECIENDO EL VALOR SELECCIONADO
-                    });
-                  },
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }*/
-
-  Widget _deliveryData() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 30),
+      margin: EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            height: 40,
-            width: 40,
-            child: widget.order.delivery?.image != null
-                ? FadeInImage(
-                    image: NetworkImage(widget.order.delivery?.image ?? ""),
-                    fit: BoxFit.cover,
-                    fadeInDuration: Duration(milliseconds: 50),
-                    placeholder: AssetImage('assets/img/no-image.png'),
-                  )
-                : Image.asset('assets/img/no-image.png'),
+            //  width: MediaQuery.of(context).size.width * 0.7,
+            child: Row(
+              children: [
+                userData.image != null
+                    ? Container(
+                        width: 50,
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl:
+                                  userData.image != null && userData.image != ''
+                                      ? userData.image!
+                                      : urlRushImage,
+                              placeholder: (context, url) => Shimmer(
+                                  child: Container(
+                                color: Colors.black,
+                              )),
+                              imageBuilder: (context, image) => Image(
+                                image: image,
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(),
+                SizedBox(width: 5),
+                Text('${userData.name}')
+              ],
+            ),
           ),
-          SizedBox(width: 5),
-          Text(
-              '${widget.order.delivery!.name} ${widget.order.delivery!.lastname}')
+          Container(
+            child: TextButton(
+                onPressed: () {
+                  _showContactMethod(userData);
+                },
+                child: Text('Contactar')),
+          )
         ],
       ),
     );
   }
 
-  /* List<DropdownMenuItem<String>> _dropDownItems(List<User> users) {
-    List<DropdownMenuItem<String>> list = [];
-    users.forEach((user) {
-      list.add(DropdownMenuItem(
-        child: Row(
-          children: [
-            Container(
-              height: 40,
-              width: 40,
-              child: FadeInImage(
-                image:NetworkImage(user.image)
-                   ,
-                fit: BoxFit.cover,
-                fadeInDuration: Duration(milliseconds: 50),
-                placeholder: AssetImage('assets/img/no-image.png'),
-              ),
-            ),
-            SizedBox(width: 5),
-            Text(user.name)
-          ],
-        ),
-        value: user.id,
-      ));
-    });
-
-    return list;
-  }*/
-
-  Widget _textData(String title, String content) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      child: ListTile(
-        title: Text(title),
-        subtitle: Text(
-          content,
-          maxLines: 2,
-        ),
-      ),
-    );
+  _showContactMethod(User user) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return CupertinoAlertDialog(
+            title: Text('Contacta a ${user.name} '),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    openTelf(user.phone);
+                  },
+                  child: Text('Llamada')),
+              TextButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: user.phone))
+                        .then((value) {
+                      //only if ->
+                      Fluttertoast.showToast(
+                          msg: 'Texto Copiado'); // -> show a notification
+                    });
+                  },
+                  child: Text('Copiar número')),
+              TextButton(
+                  onPressed: () {
+                    _con.createChat(user);
+                  },
+                  child: Text('Chat'))
+            ],
+          );
+        });
   }
 
   Widget _buttonNext() {
@@ -418,9 +278,9 @@ class _RestaurantOrdersDetailPageState
         onPressed: () {
           _con.time = _value;
           _con.updateOrder();
-          _con.createNotification();
         },
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: MyColors.primaryColor,
             padding: EdgeInsets.symmetric(vertical: 5),
             shape: RoundedRectangleBorder(
@@ -456,7 +316,7 @@ class _RestaurantOrdersDetailPageState
     );
   }
 
-  Widget _cardProduct(Product product) {
+  Widget _cardProduct(OrderProductModel product) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: Stack(
@@ -493,29 +353,12 @@ class _RestaurantOrdersDetailPageState
               ),
             ],
           ),
-          widget.order.status == 'PAGADO'
-              ? Align(
-                  alignment: Alignment.centerRight,
-                  child: Checkbox(
-                      value: product.available == 0 ? false : true,
-                      onChanged: (newValue) {
-                        if (newValue!) {
-                          product.available = 1;
-                          _con.productsAvariable.remove(product);
-                        } else {
-                          product.available = 0;
-                          _con.productsAvariable.add(product);
-                        }
-                        setState(() {});
-                        print(_con.productsAvariable.length);
-                      }))
-              : Container()
         ],
       ),
     );
   }
 
-  Widget _imageProduct(Product product) {
+  Widget _imageProduct(OrderProductModel product) {
     return Container(
       width: 50,
       height: 50,

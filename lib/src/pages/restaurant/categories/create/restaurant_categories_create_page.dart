@@ -96,6 +96,7 @@ class _RestaurantCategoriesCreatePageState
         onPressed: _con.createCategory,
         child: Text('Crear categoria'),
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: MyColors.primaryColor,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),

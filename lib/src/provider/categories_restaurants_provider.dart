@@ -30,7 +30,7 @@ class CategoriesRestaurantsProvider {
 
       if (res.statusCode == 401) {
         Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
+        new GeneralActions().logout(context, sessionUser.id!);
       }
       final data = json.decode(res.body); // CATEGORIAS
       Category category = Category.fromJsonList(data);

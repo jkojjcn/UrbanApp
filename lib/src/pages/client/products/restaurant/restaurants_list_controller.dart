@@ -1,115 +1,154 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
-
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:jcn_delivery/src/models/address.dart';
 import 'package:jcn_delivery/src/models/category.dart';
 import 'package:jcn_delivery/src/models/message.dart';
 import 'package:jcn_delivery/src/models/product.dart';
+import 'package:jcn_delivery/src/models/publications.dart';
+import 'package:jcn_delivery/src/models/restaurant.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/pages/client/products/detail/client_products_detail_page.dart';
+import 'package:jcn_delivery/src/pages/interaction/chat/chat_controller.dart';
+import 'package:jcn_delivery/src/pages/interaction/chat/chats/chats_controller.dart';
 import 'package:jcn_delivery/src/provider/categories_restaurants_provider.dart';
+import 'package:jcn_delivery/src/provider/chats_provider.dart';
 import 'package:jcn_delivery/src/provider/message_provider.dart';
+import 'package:jcn_delivery/src/provider/publications_provider.dart';
 import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
 import 'package:jcn_delivery/src/provider/restaurants_provider.dart';
+import 'package:jcn_delivery/src/provider/users_provider.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class RestaurantsListController {
   late BuildContext context;
-  SharedPref _sharedPref = new SharedPref();
+
   GlobalKey<ScaffoldState> key = new GlobalKey<ScaffoldState>();
-  late Function refresh;
-  User? user;
-  CategoriesRestaurantsProvider _categoriesRestaurantsProvider =
-      new CategoriesRestaurantsProvider();
+
+  User user = User.fromJson(GetStorage().read('user'));
+  Address currentAddress =
+      Address.fromJson(jsonDecode(GetStorage().read('currentAddress')));
+
   RestaurantsProvider _restaurantsProvider = new RestaurantsProvider();
-  List<Category> categories = [];
-  List<Message> message = [];
-
-  Timer? searchOnStoppedTyping;
-
-  String productName = '';
-  Address? currentAddress;
-
-  double distanciaCliente = 0.0;
-
-  List<Product>? selectedProducts = [];
-
+  PublicationsProvider _publicationsProvider = new PublicationsProvider();
   PushNotificationsProvider pushNotificationsProvider =
       new PushNotificationsProvider();
-
+  ChatProvider chatProvider = ChatProvider();
   MessageProvider messageProvider = new MessageProvider();
 
-  Future init(BuildContext context, Function refresh) async {
+  ChatMainController chatController = Get.put(ChatMainController());
+  ChatsController chatsControllers = Get.put(ChatsController());
+  GeneralActions generalActions = Get.put(GeneralActions());
+  GetStorage storage = GetStorage();
+
+  List<Publications> publicationsListEmpy = [];
+  List<Restaurant> restaurantsListEmpy = [];
+  double distanciaCliente = 0.0;
+
+  Future init(
+    BuildContext context,
+  ) async {
     this.context = context;
-    this.refresh = refresh;
-    user = User.fromJson(await _sharedPref.read('user'));
-
-    currentAddress = Address.fromJson(await _sharedPref.read('address') ?? {});
-
-    selectedProducts =
-        Product.fromJsonList(await _sharedPref.read('order')).toList;
-
-    _categoriesRestaurantsProvider.init(context, user!);
-    _restaurantsProvider.init(context, user!);
-    await messageProvider.init(context, user!);
-
-    getCategories();
-    // getMessages();
-    refresh();
+    _restaurantsProvider.init(context, user);
+    _publicationsProvider.init(context, user);
+    getPublications();
+    getProducts('1');
+    saveToken();
+    chatsControllers.listenMessage();
   }
 
-  void onChangeText(String idCategory, String text) {
-    const duration = Duration(
-        milliseconds:
-            800); // set the duration that you want call search() after that.
-    if (searchOnStoppedTyping != null) {
-      searchOnStoppedTyping!.cancel();
-      refresh();
-    }
-
-    searchOnStoppedTyping = new Timer(duration, () {
-      productName = text;
-      refresh();
-      getProducts(idCategory, text);
-      print('TEXTO COMPLETO $text');
-    });
+  void saveToken() {
+    if (user.id != null) {
+      pushNotificationsProvider.saveToken(user.id!);
+    } else {}
   }
 
   Future<double> distanceRestaurant(LatLng distance) async {
-    Address a = Address.fromJson(await _sharedPref.read('address') ?? {});
-
-    distanciaCliente = Geolocator.distanceBetween(
-        distance.latitude, distance.longitude, a.lat!, a.lng!);
-    // refresh();
+    distanciaCliente = Geolocator.distanceBetween(distance.latitude,
+        distance.longitude, currentAddress.lat!, currentAddress.lng!);
+    // update();
     return distanciaCliente;
   }
 
-  Future<List<Product>> getProducts(
-      String idCategory, String productName) async {
-    if (productName.isEmpty) {
-      return await _restaurantsProvider.getByCategory(idCategory);
-    } else {
-      return await _restaurantsProvider.getByCategoryAndRestaurantName(
-          idCategory, productName);
-    }
+  void filterRestaurants(String key) {
+    generalActions.filterRestaurants.value = key;
   }
 
-  void getCategories() async {
-    categories = await _categoriesRestaurantsProvider.getAll();
-    refresh();
+  void filterPublications(String key) {
+    generalActions.filterPublications.value = key;
   }
-  /*  Future<List<Message>> getMessages() async {
-    message = await messageProvider.getMessage(user!.id!);
-    return message;
-  }*/
+
+  void getProducts(String idCategory) async {
+    restaurantsListEmpy.clear();
+    generalActions.restaurants.clear();
+    restaurantsListEmpy = await _restaurantsProvider.getByCategory(idCategory);
+    restaurantsListEmpy.forEach((element) async {
+      double distanceBetwen = 0;
+      distanceBetwen =
+          await distanceRestaurant(LatLng(element.lat!, element.lng!));
+      if ((distanceBetwen / 1000) < 15) {
+        if (!generalActions.restaurants.contains(element)) {
+          double floatDistance = 0;
+          floatDistance = distanceBetwen / 1000;
+          if (element.description!.contains('04')) {
+            element.price = await generalActions
+                .distancePriceSantaElena(floatDistance.toInt());
+            generalActions.restaurants.add(element);
+          } else if (element.description!.contains('07')) {
+            element.price =
+                await generalActions.distancePriceCuenca(floatDistance.toInt());
+            generalActions.restaurants.add(element);
+            generalActions.restaurants
+                .sort((a, b) => a.price!.compareTo(b.price!));
+          } else if (element.description!.contains('000')) {
+            generalActions.restaurants.add(element);
+            generalActions.restaurants
+                .sort((a, b) => a.price!.compareTo(b.price!));
+            Get.snackbar('Carrera gratis en', '${element.name}',
+                backgroundColor: Colors.white);
+          }
+        }
+      }
+    });
+  }
+
+  void getPublications() async {
+    publicationsListEmpy.clear();
+    generalActions.publications.clear();
+    publicationsListEmpy = await _publicationsProvider.getAll();
+    publicationsListEmpy.forEach((element) async {
+      double distanceBetwen = 0;
+      distanceBetwen = await distanceRestaurant(
+          LatLng(element.restaurant!.lat!, element.restaurant!.lng!));
+      if ((distanceBetwen / 1000) < 15) {
+        if (!generalActions.publications.contains(element)) {
+          double floatDistance = 0;
+          floatDistance = distanceBetwen / 1000;
+          if (element.restaurant!.description!.contains('04')) {
+            element.restaurant!.price = await generalActions
+                .distancePriceSantaElena(floatDistance.toInt());
+            generalActions.publications.add(element);
+          } else if (element.restaurant!.description!.contains('07')) {
+            element.restaurant!.price =
+                await generalActions.distancePriceCuenca(floatDistance.toInt());
+            generalActions.publications.add(element);
+          } else if (element.restaurant!.description!.contains('000')) {
+            generalActions.publications.add(element);
+          }
+        }
+      }
+    });
+  }
 
   void openBottomSheet(Product product, Product restaurant) {
     showMaterialModalBottomSheet(
@@ -125,8 +164,9 @@ class RestaurantsListController {
             ));
   }
 
-  void logout() {
-    _sharedPref.logout(context, user!.id!);
+  void logout() async {
+    Get.offNamedUntil('/login', (route) => false);
+    GetStorage().remove('user');
   }
 
   void openDrawer() {
@@ -134,90 +174,23 @@ class RestaurantsListController {
   }
 
   void goToUpdatePage() {
-    Navigator.pushNamed(context, 'client/update');
+    Get.toNamed('/client/update');
   }
 
   void goToOrdersList() {
-    Navigator.pushNamed(context, 'client/orders/list');
+    Get.toNamed('/client/orders/list');
+  }
+
+  void goToAddressList() {
+    Get.offNamed('/client/address/list');
   }
 
   void goToOrderCreatePage() {
-    Navigator.pushNamed(context, 'client/orders/create');
+    Get.toNamed('/client/orders/create');
   }
 
   void goToRoles() {
-    Navigator.pushNamedAndRemoveUntil(context, 'roles', (route) => false);
-  }
-
-  restaurantDistance(_distanceRC) {
-    if (_distanceRC / 1000 <= 1) {
-      return Text(
-        ' \$ 0.99',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if (_distanceRC / 1000 <= 2) {
-      return Text(
-        ' \$ 0.99 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 2) && (_distanceRC / 1000 <= 3)) {
-      return Text(
-        ' \$ 1.49 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 3) && (_distanceRC / 1000 <= 4)) {
-      return Text(
-        ' \$ 1.99 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 4) && (_distanceRC / 1000 <= 5)) {
-      return Text(
-        ' \$ 2.49 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 5) && (_distanceRC / 1000 <= 6)) {
-      return Text(
-        ' \$ 3.25 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 6) && (_distanceRC / 1000 <= 7)) {
-      return Text(
-        ' \$ 3.69 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 7) && (_distanceRC / 1000 <= 8)) {
-      return Text(
-        ' \$ 4.10 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 8) && (_distanceRC / 1000 <= 9)) {
-      return Text(
-        ' \$ 4.49 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 9) && (_distanceRC / 1000 <= 10)) {
-      return Text(
-        ' \$ 4.99 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 10) && (_distanceRC / 1000 <= 11)) {
-      return Text(
-        ' \$ 5.25 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 11) && (_distanceRC / 1000 <= 12)) {
-      return Text(
-        ' \$ 5.99 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else if ((_distanceRC / 1000 > 12 && (_distanceRC / 1000 <= 13))) {
-      return Text(
-        ' \$ 6.25 ',
-        style: TextStyle(color: Colors.white, fontSize: 12),
-      );
-    } else {
-      return Icon(Icons.credit_card);
-    }
+    Get.offNamedUntil('/roles', (route) => false);
   }
 
   openTelf(String number) async {
@@ -246,31 +219,54 @@ class RestaurantsListController {
     }
   }
 
-  openwhatsapp(String number) async {
-    var whatsapp = number;
-    var whatsappURlA =
-        "whatsapp://send?phone=" + "+593" + number + "&text=hello";
-    var whatappURLI = "https://wa.me/$whatsapp?text=${Uri.parse("hello")}";
-    if (Platform.isIOS) {
-      // for iOS phone only
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatappURLI)) {
-        // ignore: deprecated_member_use
-        await launch(whatappURLI, forceSafariVC: false);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    } else {
-      // android , web
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatsappURlA)) {
-        // ignore: deprecated_member_use
-        await launch(whatsappURlA);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    }
+  void openAppInfo() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Acerca de nosotros'),
+            content: Text(
+                'Somos una aplicación de pedidos a domicilio. Disponemos del mejor personal calificado para desempeñarse como repartidor/a. '),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                              title: Text('Contacto'),
+                              content: Text(
+                                'ESTABLECIMIENTOS: Contáctese para unirse al proyecto. (sin costo de afiliación ni mensualidades ni nada por el estilo). REPARTIDORES: Cupos disponibles.',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                              actions: [
+                                Column(
+                                  children: [
+                                    TextButton(
+                                        onPressed: () {
+                                          openTelf('+593998041037');
+                                        },
+                                        child: Text('Llamada')),
+                                    TextButton(
+                                        onPressed: () {
+                                          Clipboard.setData(ClipboardData(
+                                                  text: '+593998041037'))
+                                              .then((value) {
+                                            //only if ->
+                                            Fluttertoast.showToast(
+                                                msg:
+                                                    'Texto Copiado'); // -> show a notification
+                                          });
+                                        },
+                                        child: Text('Copiar número'))
+                                  ],
+                                )
+                              ]);
+                        });
+                  },
+                  child: Text('Trabaja con nosotros')),
+            ],
+          );
+        });
   }
 }

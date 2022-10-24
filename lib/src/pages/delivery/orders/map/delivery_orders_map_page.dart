@@ -36,24 +36,26 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-              height: MediaQuery.of(context).size.height * 0.6,
-              child: _googleMaps()),
-          SafeArea(
-            child: Column(
-              children: [
-                _buttonCenterPosition(),
-                Spacer(),
-                _cardOrderInfo(),
-              ],
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Container(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: _googleMaps()),
+            SafeArea(
+              child: Column(
+                children: [
+                  //   _buttonCenterPosition(),
+                  Spacer(),
+                  _cardOrderInfo(),
+                ],
+              ),
             ),
-          ),
-          Positioned(top: 40, left: 15, child: _iconGoogleMaps()),
-          Positioned(top: 85, left: 15, child: _iconWaze())
-        ],
+            Positioned(top: 40, left: 15, child: _iconGoogleMaps()),
+            Positioned(top: 85, left: 15, child: _iconWaze())
+          ],
+        ),
       ),
     );
   }
@@ -131,16 +133,6 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
             ),
           ),
           Spacer(),
-          Container(
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(15)),
-                  color: Colors.grey[200]),
-              child: TextButton(
-                onPressed: () {
-                  openwhatsapp(widget.order?.client.phone ?? "");
-                },
-                child: Text('WhatsApp'),
-              )),
           SizedBox(
             width: 15,
           ),
@@ -177,34 +169,6 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
             .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
       }
     } else {
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatsappURlAndroid)) {
-        // ignore: deprecated_member_use
-        await launch(whatsappURlAndroid);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    }
-  }
-
-  openwhatsapp(String number) async {
-    var whatsapp = number;
-    var whatsappURlAndroid =
-        "whatsapp://send?phone=" + "+593" + number + "&text=hello";
-    var whatappURLI = "https://wa.me/$whatsapp?text=${Uri.parse("hello")}";
-    if (Platform.isIOS) {
-      // for iOS phone only
-      // ignore: deprecated_member_use
-      if (await canLaunch(whatappURLI)) {
-        // ignore: deprecated_member_use
-        await launch(whatappURLI, forceSafariVC: false);
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: new Text("whatsapp no installed")));
-      }
-    } else {
-      // android , web
       // ignore: deprecated_member_use
       if (await canLaunch(whatsappURlAndroid)) {
         // ignore: deprecated_member_use
@@ -258,6 +222,7 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
       child: ElevatedButton(
         onPressed: _con.updateToDelivered,
         style: ElevatedButton.styleFrom(
+            // ignore: deprecated_member_use
             primary: MyColors.primaryColor,
             padding: EdgeInsets.symmetric(vertical: 5),
             shape: RoundedRectangleBorder(
@@ -321,10 +286,11 @@ class _DeliveryOrdersMapPageState extends State<DeliveryOrdersMapPage> {
       mapType: MapType.normal,
       initialCameraPosition: _con.initialPosition,
       onMapCreated: _con.onMapCreated,
-      myLocationButtonEnabled: false,
-      myLocationEnabled: false,
+      myLocationButtonEnabled: true,
+      myLocationEnabled: true,
+      zoomControlsEnabled: false,
       markers: Set<Marker>.of(_con.markers.values),
-      polylines: _con.polylines,
+      // polylines: _con.polylines,
     );
   }
 

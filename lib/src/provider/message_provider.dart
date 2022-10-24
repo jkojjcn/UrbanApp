@@ -1,65 +1,81 @@
 import 'dart:convert';
-import 'dart:async';
-import 'package:flutter/cupertino.dart';
+import 'dart:io';
+
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jcn_delivery/src/api/environment.dart';
 import 'package:jcn_delivery/src/models/message.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
-import 'package:jcn_delivery/src/utils/shared_pref.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:path/path.dart';
 
-class MessageProvider {
-  String _url = Environment.API_DELIVERY;
-  String _api = '/api/message';
-  late BuildContext context;
-  late User sessionUser;
+class MessageProvider extends GetConnect {
+  String rutaNew = Environment.API_DELIVERY_NEW + '/api/message';
 
-  Future init(BuildContext context, User sessionUser) async {
-    this.context = context;
-    this.sessionUser = sessionUser;
-  }
+  String ruta = Environment.API_DELIVERY;
 
-  Future<List<Message>> getMessage(String idUser) async {
-    try {
-      Uri url = Uri.http(_url, '$_api/findMessage/$idUser');
-      Map<String, String> headers = {
-        'Content-type': 'application/json',
-        'Authorization': sessionUser.sessionToken!
-      };
-      final res = await http.get(url, headers: headers);
+  User userSession = User.fromJson(GetStorage().read('user') ?? {});
 
-      if (res.statusCode == 401) {
-        Fluttertoast.showToast(msg: 'Sesion expirada');
-        new SharedPref().logout(context, sessionUser.id!);
-      }
-      final data = json.decode(res.body); // CATEGORIAS
-      Message message = Message.fromJsonList(data);
-      // product.toList.sort((a, b) => a.lat.compareTo(b.price));
-      // print(product.toJson());
-      return message.toList;
-    } catch (e) {
-      print('Error: $e');
+  Future<List<Message>> getMessagesByChat(String idChat) async {
+    Response response = await get('$rutaNew/findByChat/$idChat', headers: {
+      'Content-Type': 'application/json',
+      'Authorization': userSession.sessionToken!
+    });
+
+    if (response.statusCode == 401) {
+      Get.snackbar('Petición denegada',
+          'Tu usuario no tiene permitido obtener esta información');
       return [];
     }
+
+    List<Message> messages = Message.fromJsonList(response.body);
+    return messages;
   }
 
-  Future<ResponseApi> createNotification(Message message) async {
-    Uri url = Uri.http(_url, '$_api/createNotification/$message');
-    String bodyParams = json.encode(message);
-    Map<String, String> headers = {
-      'Content-type': 'application/json',
-      'Authorization': sessionUser.sessionToken!
-    };
-    final res = await http.put(url, headers: headers, body: bodyParams);
+  Future<ResponseApi> create(Message message) async {
+    Response response = await post('$rutaNew/create', message.toJson(),
+        headers: {
+          'Content-type': 'application/json',
+          'Authorization': userSession.sessionToken!
+        });
 
-    if (res.statusCode == 401) {
-      Fluttertoast.showToast(msg: 'Sesion expirada');
-      new SharedPref().logout(context, sessionUser.id ?? "");
+    if (response.body == null) {
+      Get.snackbar('Error', 'No se pudo actualizar su cuenta, reintente!');
+      return ResponseApi();
     }
+    ResponseApi responseApi = ResponseApi.fromJson(response.body);
 
-    final data = json.decode(res.body);
-    ResponseApi responseApi = ResponseApi.fromJson(data);
+    return responseApi;
+  }
+
+  Future<Stream> createWithImage(Message message, File image) async {
+    Uri url = Uri.http('$ruta', '/api/message/createWithImage');
+    final request = http.MultipartRequest('POST', url);
+
+    request.headers['Authorization'] = userSession.sessionToken!;
+
+    request.files.add(http.MultipartFile(
+        'image', http.ByteStream(image.openRead().cast()), await image.length(),
+        filename: basename(image.path)));
+    request.fields['message'] = json.encode(message);
+    final response = await request.send();
+    return response.stream.transform(utf8.decoder);
+  }
+
+  Future<ResponseApi> updateToSeen(String idMessage) async {
+    Response response = await put('$rutaNew/updateToSeen', {
+      'id': idMessage,
+    }, headers: {
+      'Content-type': 'application/json',
+      'Authorization': userSession.sessionToken!
+    });
+
+    if (response.statusCode != 201) {
+      Get.snackbar('Error', 'No se pudo actualizar a Visto!');
+      return ResponseApi();
+    }
+    ResponseApi responseApi = ResponseApi.fromJson(response.body);
 
     return responseApi;
   }

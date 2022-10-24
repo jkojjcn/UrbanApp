@@ -1,9 +1,15 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:jcn_delivery/src/models/chat.dart';
 import 'package:jcn_delivery/src/models/message.dart';
 import 'package:jcn_delivery/src/models/order.dart';
 import 'package:jcn_delivery/src/models/product.dart';
 import 'package:jcn_delivery/src/models/response_api.dart';
 import 'package:jcn_delivery/src/models/user.dart';
+import 'package:jcn_delivery/src/provider/chats_provider.dart';
 import 'package:jcn_delivery/src/provider/orders_provider.dart';
 import 'package:jcn_delivery/src/provider/push_notifications_provider.dart';
 import 'package:jcn_delivery/src/provider/users_provider.dart';
@@ -16,16 +22,18 @@ class RestaurantOrdersDetailController {
 
   late Product product;
 
+  User user = User.fromJson(GetStorage().read('user'));
+
+  ChatProvider chatProvider = Get.put(ChatProvider());
+  GeneralActions generalActions = Get.put(GeneralActions());
+
   int counter = 1;
   late double productPrice;
-
-  SharedPref _sharedPref = new SharedPref();
 
   double total = 0;
   late Order order;
   double time = 10.0;
 
-  late User user;
   List<User> users = [];
   UsersProvider _usersProvider = new UsersProvider();
   OrdersProvider _ordersProvider = new OrdersProvider();
@@ -40,12 +48,35 @@ class RestaurantOrdersDetailController {
     this.context = context;
     this.refresh = refresh;
     this.order = order;
-    user = User.fromJson(await _sharedPref.read('user'));
+
     _usersProvider.init(context, sessionUser: user);
     _ordersProvider.init(context, user);
     getTotal();
     getUsers();
     refresh();
+  }
+
+  void createChat(User userReceiver) async {
+    Chat chat = Chat(idUser1: user.id, idUser2: userReceiver.id);
+
+    bool exist = generalActions.chats.any((element) =>
+        (element.idUser1 == user.id && element.idUser2 == userReceiver.id) &&
+        (element.idUser1 == userReceiver.id && element.idUser2 == user.id));
+    log(exist.toString());
+
+    if (exist == false) {
+      ResponseApi responseApi = await chatProvider.create(chat);
+
+      if (responseApi.success == true) {
+        Get.toNamed('/messages', arguments: {'user': userReceiver.toJson()});
+        //  Get.snackbar('Creado', responseApi.message ?? 'Error en la respuesta');
+      }
+    } else {
+      log('Chat encontrado');
+      Get.toNamed('/messages', arguments: {'user': userReceiver.toJson()});
+    }
+
+    log(exist.toString());
   }
 
   void sendNotification(String tokenDelivery) {
@@ -56,7 +87,14 @@ class RestaurantOrdersDetailController {
   }
 
   void sendNotificationClient(String tokenDelivery) {
-    Map<String, dynamic> data = {'click_action': 'FLUTTER_NOTIFICATION_CLICK'};
+    Map<String, dynamic> data = {
+      'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+      'title': 'Preparando orden',
+      'body': 'El restaurante está preparando su orden',
+      'id_message': 'idMensaje',
+      'id_chat': 'idChat',
+      'url': 'restaurant'
+    };
 
     pushNotificationsProvider.sendMessage(tokenDelivery, data,
         'Enciendan las estufas!', 'Estamos preparando tu pedido :D');
@@ -67,10 +105,38 @@ class RestaurantOrdersDetailController {
       ResponseApi responseApi =
           await _ordersProvider.updateToDispatched(order, time);
 
-      //   User deliveryUser = await _usersProvider.getById(order.idDelivery!);
-      users.forEach((element) {
-        sendNotification(element.notificationToken ?? "");
-      });
+      if (user.lastname!.contains('04')) {
+        users.forEach((element) {
+          if (element.lastname!.contains('04')) {
+            Map<String, dynamic> data = {
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'title': 'Orden disponible',
+              'body': 'Se ha generado una orden! :D',
+              'id_message': 'idMensaje',
+              'id_chat': 'idChat',
+              'url': 'specific'
+            };
+            pushNotificationsProvider.sendOrders(element.notificationToken!,
+                data, 'Orden disponible', 'Se ha generado una orden! :D');
+          }
+        });
+      } else if (user.lastname!.contains('07')) {
+        users.forEach((element) {
+          if (element.lastname!.contains('07')) {
+            Map<String, dynamic> data = {
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'title': 'Orden disponible',
+              'body': 'Se ha generado una orden! :D',
+              'id_message': 'idMensaje',
+              'id_chat': 'idChat',
+              'url': 'specific'
+            };
+            pushNotificationsProvider.sendOrders(element.notificationToken!,
+                data, 'Orden disponible', 'Se ha generado una orden! :D');
+          }
+        });
+      }
+
       sendNotificationClient(order.client.notificationToken!);
 
       Fluttertoast.showToast(
@@ -88,32 +154,6 @@ class RestaurantOrdersDetailController {
     }
   }
 
-  void createNotification() async {
-    Message mensaje = Message(
-        from: int.parse(user.id!),
-        to: int.parse(order.client.id!),
-        type: 'order',
-        message: 'Preparando orden',
-        open: 'No');
-    try {
-      ResponseApi responseApi =
-          await _ordersProvider.createNotification(mensaje);
-
-      //  sendNotificationClient(order.client.notificationToken!);
-      Fluttertoast.showToast(
-          msg: "Notificacion creada", toastLength: Toast.LENGTH_LONG);
-
-      print("Notificacion creada correctamente");
-      //  print(deliveryUser.notificationToken);
-
-      Fluttertoast.showToast(
-          msg: responseApi.message!, toastLength: Toast.LENGTH_LONG);
-    } catch (e) {
-      print(e);
-      Fluttertoast.showToast(msg: 'Intentalo nuevamente');
-    }
-  }
-
   void getUsers() async {
     users = await _usersProvider.getDeliveryMen();
     refresh();
@@ -121,8 +161,8 @@ class RestaurantOrdersDetailController {
 
   void getTotal() {
     total = 0;
-    order.products.forEach((product) {
-      total = total + product.priceRestaurant!;
+    order.productsOrder!.forEach((productsOrder) {
+      total = total + productsOrder.priceRestaurant!;
     });
     refresh();
   }
