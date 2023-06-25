@@ -1,3 +1,22 @@
+# Urban Delivery
+
+An application delivery created with Flutter & Dart.
+- Flutter 
+- Firebase
+- GoogleMaps Api
+- Postgresql
+- SocketIO
+- Heroku (To deploy)
+
+## Features
+General
+- Auth Phone (firebase)
+- Realtime chat
+- VideoPlayer
+- User rols (client, delivery & restaurant)
+- Delivery Tracking
+- &more
+
 # jcn_delivery
 
 A new Flutter project.
