@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
@@ -37,6 +38,7 @@ class RestaurantsProvider {
       }
       final data = json.decode(res.body); // CATEGORIAS
       Restaurant restaurant = Restaurant.fromJsonList(data);
+      log("${restaurant.toList}");
       return restaurant.toList;
     } catch (e) {
       print('Error: $e');

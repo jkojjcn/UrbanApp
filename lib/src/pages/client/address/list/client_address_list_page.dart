@@ -136,27 +136,17 @@ class _ClientAddressListPageState extends State<ClientAddressListPage>
                       FadeInRight(
                         duration: Duration(milliseconds: 500),
                         child: FloatingActionButton(
-                            heroTag: 'ActualPosition',
-                            backgroundColor: Colors.deepOrange,
-                            mini: true,
-                            onPressed: () {
-                              _con.updateLocation();
-                            },
-                            child: Stack(
-                              children: [
-                                Icon(
-                                  Icons.place_outlined,
-                                  size: 25,
-                                ),
-                                Positioned(
-                                    left: 10,
-                                    child: Icon(
-                                      Icons.search,
-                                      size: 15,
-                                      color: Colors.black,
-                                    ))
-                              ],
-                            )),
+                          heroTag: 'ActualPosition',
+                          backgroundColor: Colors.deepOrange.withOpacity(0.3),
+                          mini: true,
+                          onPressed: () {
+                            _con.updateLocation();
+                          },
+                          child: Icon(
+                            Icons.place_outlined,
+                            size: 25,
+                          ),
+                        ),
                       ),
                       SizedBox(
                         height: 15,
@@ -280,20 +270,13 @@ class _ClientAddressListPageState extends State<ClientAddressListPage>
         ),
         Center(
           child: IgnorePointer(
-            child: Transform.rotate(
-              angle: -90 * math.pi / 180,
-              child: CircleAvatar(
-                backgroundColor: Colors.white,
-                radius: 27,
-                child: Image.asset(
-                  'assets/iconApp/logoFly.png',
-                  color: Colors.black,
-                  width: MediaQuery.of(context).size.width * 0.18,
-                  fit: BoxFit.fitWidth,
-                ),
-              ),
-            ),
-          ),
+              child: BounceInDown(
+                  delay: Duration(seconds: 2),
+                  child: Icon(
+                    Icons.location_on_rounded,
+                    color: Colors.deepOrange,
+                    size: 40,
+                  ))),
         ),
       ],
     );
@@ -330,7 +313,10 @@ class _ClientAddressListPageState extends State<ClientAddressListPage>
                         Icon(
                           Icons.delivery_dining,
                         ),
-                        Text('Aquí')
+                        Text(
+                          'Aquí',
+                          style: TextStyle(color: Colors.black),
+                        )
                       ],
                     ),
                   ),

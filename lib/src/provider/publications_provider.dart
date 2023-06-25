@@ -39,6 +39,7 @@ class PublicationsProvider {
         log('Llegaron bien $data');
 
         Publications publications = Publications.fromJsonList(data);
+        log('Lista de Publicaciones: ${publications.toList}');
         return publications.toList;
       } else {
         log('Error: ${res.statusCode}');

@@ -60,7 +60,8 @@ class MessagesPage extends StatelessWidget {
           message: message.message ?? '',
           delivered: true,
           isImage: true,
-          url: message.url ?? 'https://i.ibb.co/7V3mqx4/logoIOS.png',
+          url: message.url ??
+              'https://i.ibb.co/55h301K/logo-White-Background.png',
           isMe: message.idSender == con.myUser.id ? true : false,
           status: message.status ?? 'ENVIADO',
           time: RelativeTimeUtil.getRelativeTime(message.timestamp ?? 0));
@@ -139,16 +140,10 @@ class MessagesPage extends StatelessWidget {
                           Expanded(
                             flex: 4,
                             child: FadeIn(
-                              child: Transform.rotate(
-                                angle: -90 * math.pi / 180,
-                                child: Image.asset(
-                                  'assets/iconApp/logoFly.png',
-                                  color: Colors.black,
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.15,
-                                ),
-                              ),
-                            ),
+                                child: Icon(
+                              Icons.send_rounded,
+                              color: Colors.black,
+                            )),
                           ),
                         ],
                       )),
@@ -194,14 +189,15 @@ class MessagesPage extends StatelessWidget {
                   child: con.userChat.image != ''
                       ? FadeInImage.assetNetwork(
                           fit: BoxFit.cover,
-                          placeholder: 'assets/iconApp/fly.png',
+                          placeholder: 'assets/urban/logoWhiteBackground.png',
                           image: con.userChat.image ??
-                              'https://i.ibb.co/7V3mqx4/logoIOS.png',
+                              'https://i.ibb.co/55h301K/logo-White-Background.png',
                         )
                       : FadeInImage.assetNetwork(
                           fit: BoxFit.cover,
-                          placeholder: 'assets/iconApp/fly.png',
-                          image: 'https://i.ibb.co/7V3mqx4/logoIOS.png',
+                          placeholder: 'assets/urban/logoWhiteBackground.png',
+                          image:
+                              'https://i.ibb.co/55h301K/logo-White-Background.png',
                         ),
                 ),
               ),

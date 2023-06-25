@@ -36,30 +36,25 @@ class _CardsViewState extends State<CardsView> {
                       )));*/
         },
         child: Container(
-          padding: EdgeInsets.fromLTRB(7, 2, 7, 2),
-          height: MediaQuery.of(context).size.height * 0.2,
-          width: MediaQuery.of(context).size.width * 0.28,
-          decoration: BoxDecoration(
-              //        color: Color.fromARGB(255, 41, 41, 41),
-              borderRadius: BorderRadius.circular(15)),
+          padding: EdgeInsets.fromLTRB(5, 4, 5, 2),
+          height: MediaQuery.of(context).size.height * 0.15,
+          width: MediaQuery.of(context).size.width * 0.30,
           child: Stack(
             children: <Widget>[
               Container(
                   height: 150,
                   width: 120,
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Color.fromARGB(255, 31, 31, 31),
+                      color: Color.fromARGB(255, 255, 255, 255),
                       boxShadow: [
                         BoxShadow(
                             color: Colors.black,
-                            blurRadius: 7,
-                            offset: Offset(1, 1))
+                            blurRadius: 2,
+                            offset: Offset(2, 2))
                       ]),
                   //s color: Colors.black,
                   child: widget.product?.image4 != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
                           child: CachedNetworkImage(
                             imageUrl: widget.product!.image4!,
                             placeholder: (context, url) => Shimmer(
@@ -72,7 +67,7 @@ class _CardsViewState extends State<CardsView> {
                             ),
                           ),
                         )
-                      : Image.asset('assets/iconApp/2xvsf.png')),
+                      : Image.asset('assets/iconApp/logoMoto.png')),
               widget.product!.image2 != null
                   ? Align(
                       alignment: Alignment.topCenter,
@@ -88,7 +83,7 @@ class _CardsViewState extends State<CardsView> {
                                     ? Colors.red
                                     : Colors.green
                                 : Color.fromARGB(255, 199, 179, 0),
-                            borderRadius: BorderRadius.circular(5)),
+                            borderRadius: BorderRadius.circular(3)),
                         child: Text(
                           widget.product!.image2.toString(),
                           style: TextStyle(color: Colors.white),

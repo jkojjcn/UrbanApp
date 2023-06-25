@@ -1,6 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'dart:math' as math;
@@ -42,37 +43,100 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
         key: _con.key,
         backgroundColor: Colors.green,
         drawer: drawer(),
-        appBar: appBar(context),
+        appBar: _tabController?.index == 1 ? appBar(context) : null,
         body: Container(
             color: Colors.black,
             height: MediaQuery.of(context).size.height * 1,
             child: Stack(
               children: [
                 TabViewWidget(tabController: _tabController!, con: _con),
-                tabViewBar(context),
+                //  tabViewBar(context),
               ],
             )),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: Container(
+          width: MediaQuery.of(context).size.width * 1,
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.bottomRight,
+                  end: Alignment.topLeft,
+                  colors: [
+                Colors.transparent,
+                Color.fromARGB(255, 68, 87, 96),
+                Color.fromARGB(255, 68, 87, 96),
+                Color.fromARGB(255, 68, 87, 96),
+                Colors.transparent,
+              ])),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FloatingActionButton(
+                heroTag: 'userButtonFloat',
+                mini: true,
+                backgroundColor: _tabController?.index == 0
+                    ? Color.fromARGB(255, 255, 255, 255)
+                    : Color.fromARGB(255, 167, 167, 167),
+                onPressed: () {
+                  setState(() {
+                    _tabController?.index = 0;
+                  });
+                },
+                child: iconFadeIn(Icons.person),
+              ),
+              /*   FloatingActionButton(
+                heroTag: 'videoButtonFloat',
+                mini: true,
+                backgroundColor: _tabController?.index == 0
+                    ? Color.fromARGB(255, 255, 255, 255)
+                    : Color.fromARGB(255, 167, 167, 167),
+                onPressed: () {
+                  setState(() {
+                    _tabController?.index = 0;
+                  });
+                },
+                child: iconFadeIn(Icons.play_arrow_rounded),
+              ),*/
+              FloatingActionButton(
+                  heroTag: 'homeButtonFloat',
+                  mini: true,
+                  backgroundColor: _tabController?.index == 1
+                      ? Color.fromARGB(255, 255, 255, 255)
+                      : Color.fromARGB(255, 167, 167, 167),
+                  child: iconFadeIn(Icons.home_filled),
+                  onPressed: () {
+                    setState(() {
+                      _tabController?.index = 1;
+                    });
+                  }),
+              FloatingActionButton(
+                heroTag: 'shoppingButtonFloat',
+                mini: true,
+                backgroundColor: _tabController?.index == 2
+                    ? Color.fromARGB(255, 255, 255, 255)
+                    : Color.fromARGB(255, 167, 167, 167),
+                onPressed: () {
+                  setState(() {
+                    _tabController?.index = 2;
+                  });
+                },
+                child: iconFadeIn(Icons.shopping_bag),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Align tabViewBar(BuildContext context) {
     return Align(
-      alignment: Alignment.bottomCenter,
+      alignment: Alignment.topCenter,
       child: Container(
           decoration: BoxDecoration(
-              color: Color.fromARGB(255, 41, 41, 41),
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-              boxShadow: [
-                BoxShadow(
-                    blurRadius: 4,
-                    offset: Offset(1, 1),
-                    color: Color.fromARGB(255, 0, 0, 0).withOpacity(0.7),
-                    spreadRadius: 2)
-              ]),
-          height: 45,
-          width: MediaQuery.of(context).size.width * 0.6,
+            color: Color.fromARGB(255, 32, 32, 32),
+          ),
+          height: MediaQuery.of(context).size.height * 0.05,
+          width: MediaQuery.of(context).size.width * 1,
           alignment: Alignment.bottomCenter,
           child: TabBar(
             indicatorColor: Colors.deepOrange,
@@ -81,18 +145,40 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
             controller: _tabController,
             isScrollable: true,
             tabs: [
-              iconFadeIn(Icons.play_arrow_rounded),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  iconFadeIn(Icons.play_arrow_rounded),
+                  Text(
+                    'Descubrir',
+                    style: TextStyle(color: Colors.black),
+                  )
+                ],
+              ),
               FadeIn(
-                child: Transform.rotate(
-                  angle: -90 * math.pi / 180,
-                  child: Image.asset(
-                    'assets/iconApp/logoFly.png',
-                    color: Colors.white,
-                    width: MediaQuery.of(context).size.width * 0.15,
-                  ),
+                child: Container(
+                  //  margin: EdgeInsets.only(bottom: 15),
+                  width: MediaQuery.of(context).size.width * 0.25,
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                    fit: BoxFit.cover,
+                    image: AssetImage(
+                      'assets/urban/logoTransparentWhite.png',
+                    ),
+                  )),
                 ),
               ),
-              iconFadeIn(Icons.shopping_bag),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  iconFadeIn(Icons.shopping_bag),
+                  Text(
+                    'Mis pedidos',
+                    style: TextStyle(color: Colors.black),
+                  )
+                ],
+              ),
             ],
           )),
     );
@@ -102,13 +188,13 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
     return FadeIn(
         child: Icon(
       icon,
-      color: Colors.white,
+      color: Colors.black,
     ));
   }
 
   AppBar appBar(BuildContext context) {
     return AppBar(
-        backgroundColor: Color.fromARGB(255, 41, 41, 41),
+        backgroundColor: Color.fromARGB(255, 32, 32, 32),
         title: appBarTitleAddress(context),
         centerTitle: true,
         actions: [
@@ -122,7 +208,10 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
       duration: Duration(seconds: 2),
       delay: Duration(milliseconds: 300),
       child: IconButton(
-        icon: Icon(Icons.settings),
+        icon: Icon(
+          Icons.list,
+          color: Colors.white,
+        ),
         onPressed: () {
           _con.openDrawer();
         },
@@ -137,7 +226,11 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
       child: FloatingActionButton(
           child: Stack(
             children: [
-              Center(child: iconFadeIn(Icons.mail)),
+              Center(
+                  child: Icon(
+                Icons.notifications,
+                color: Colors.white,
+              )),
               generalActions.chats.length != 0
                   ? Obx(() {
                       return chatCountIcon();
@@ -148,7 +241,7 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
           heroTag: "messageButton",
           mini: true,
           elevation: 0,
-          backgroundColor: Color.fromARGB(255, 73, 53, 53),
+          backgroundColor: Colors.transparent,
           onPressed: () {
             Get.toNamed('/chatPage');
           }),
@@ -162,7 +255,7 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
         child: Container(
           padding: EdgeInsets.all(4),
           decoration: BoxDecoration(
-              color: Color.fromARGB(255, 70, 70, 70),
+              color: Color.fromARGB(255, 109, 109, 109),
               borderRadius: BorderRadius.circular(10)),
           width: MediaQuery.of(context).size.width * 0.5,
           child: Center(
@@ -219,25 +312,31 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            DrawerHeader(
-                decoration: BoxDecoration(color: Colors.black),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.black,
-                      backgroundImage: AssetImage('assets/iconApp/fly.png'),
-                    ),
-                    Column(
-                      children: [
-                        textUserDrawer(
-                            '${_con.user.name ?? ''} ${_con.user.lastname ?? ''}'),
-                        textUserDrawer(_con.user.email ?? ''),
-                        textUserDrawer(_con.user.phone ?? '')
-                      ],
-                    ),
-                  ],
-                )),
+            GestureDetector(
+              onTap: () {
+                _con.goToUpdatePage();
+              },
+              child: DrawerHeader(
+                  decoration: BoxDecoration(color: Colors.black),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.black,
+                        backgroundImage:
+                            AssetImage('assets/urban/logoTransparent.png'),
+                      ),
+                      Column(
+                        children: [
+                          textUserDrawer(
+                              '${_con.user.name ?? ''} ${_con.user.lastname ?? ''}'),
+                          textUserDrawer(_con.user.email ?? ''),
+                          textUserDrawer(_con.user.phone ?? '')
+                        ],
+                      ),
+                    ],
+                  )),
+            ),
             Column(
               children: [
                 Column(
@@ -248,7 +347,7 @@ class _RestaurantsListPageState extends State<RestaurantsListPage>
                         _con.goToOrdersList),
                     _con.user.roles?.length != 1
                         ? drawerAction(
-                            'Soy RushTeam',
+                            'Soy Corcel Team',
                             Icons.swap_horizontal_circle_rounded,
                             _con.goToRoles)
                         : Container(),

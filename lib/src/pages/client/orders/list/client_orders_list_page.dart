@@ -54,6 +54,10 @@ class _ClientOrdersListPageState extends State<ClientOrdersListPage> {
                 IconButton(
                     onPressed: () {
                       Get.toNamed('/centralChat');
+                      Get.snackbar('Ayuda',
+                          'Escríbanos a nuestro UrbanChat (Ordenes, problemas, dudas, sugerencias, situaciones.)',
+                          duration: Duration(seconds: 5),
+                          backgroundColor: Colors.white);
                     },
                     icon: Icon(Icons.help)),
               ],

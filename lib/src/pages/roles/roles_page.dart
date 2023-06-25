@@ -56,7 +56,7 @@ class _RolesPageState extends State<RolesPage> {
           Container(
             height: 100,
             child: FadeInImage(
-              image: NetworkImage(rol.image!),
+              image: AssetImage('assets/urban/corceltransparent.png'),
               fit: BoxFit.contain,
               fadeInDuration: Duration(milliseconds: 50),
               placeholder: AssetImage('assets/img/no-image.png'),

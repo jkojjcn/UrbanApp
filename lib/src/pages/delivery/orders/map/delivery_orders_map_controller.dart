@@ -82,7 +82,7 @@ class DeliveryOrdersMapController {
   void sendNotification(String tokenDelivery) {
     Map<String, dynamic> data = {
       'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-      'title': 'Hola soy ${user.name} de Rush!',
+      'title': 'Hola soy ${user.name} de Urban!',
       'body': 'Me ecuentro cerca del lugar de entrega. :D',
       'id_message': 'idMensaje',
       'id_chat': 'idChat',
@@ -92,7 +92,7 @@ class DeliveryOrdersMapController {
     pushNotificationsProvider.sendMessage(
         tokenDelivery,
         data,
-        'Hola soy ${user.name} de Rush!',
+        'Hola soy ${user.name} de Urban!',
         'Me ecuentro cerca del lugar de entrega. :D');
   }
 

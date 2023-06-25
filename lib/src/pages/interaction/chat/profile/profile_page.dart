@@ -46,9 +46,10 @@ class ProfilePage extends StatelessWidget {
                                 con.user.value.image != 'null'
                             ? FadeInImage.assetNetwork(
                                 fit: BoxFit.cover,
-                                placeholder: 'assets/iconApp/fly.png',
+                                placeholder:
+                                    'assets/urban/logoWhiteBackground.png',
                                 image: con.user.value.image ??
-                                    'https://i.ibb.co/7V3mqx4/logoIOS.png',
+                                    'https://i.ibb.co/55h301K/logo-White-Background.png',
                               )
                             : Container(),
                       ),

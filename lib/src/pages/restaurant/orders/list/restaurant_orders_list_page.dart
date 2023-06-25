@@ -9,6 +9,7 @@ import 'package:jcn_delivery/src/pages/restaurant/orders/list/restaurant_orders_
 import 'package:jcn_delivery/src/utils/my_colors.dart';
 import 'package:jcn_delivery/src/utils/relative_time_util.dart';
 import 'package:jcn_delivery/src/utils/shared_pref.dart';
+import 'package:jcn_delivery/src/widgets/cards_view.dart';
 import 'package:jcn_delivery/src/widgets/no_data_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -46,112 +47,162 @@ class _RestaurantOrdersListPageState extends State<RestaurantOrdersListPage> {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: _con.status.length,
-      child: Scaffold(
-        key: _con.key,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(100),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.white,
-            flexibleSpace: Column(
-              children: [
-                SizedBox(height: 40),
-                _menuDrawer(),
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    openTelf('0998041037');
-                  },
-                  child: Icon(Icons.phone)),
-              FadeInDown(
-                duration: Duration(seconds: 2),
-                delay: Duration(milliseconds: 600),
-                child: FloatingActionButton(
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Icon(
-                            Icons.mail,
-                            color: Colors.white,
-                          ),
-                        ),
-                        generalActions.chats.length != 0 &&
-                                generalActions.chats.length <= 0
-                            ? Obx(() {
-                                return Align(
-                                  alignment: Alignment.topRight,
-                                  child: chatCountIcon(),
-                                );
-                              })
-                            : Container(),
-                      ],
-                    ),
-                    heroTag: "messageButton",
-                    mini: true,
-                    elevation: 0,
-                    backgroundColor: Color.fromARGB(255, 73, 53, 53),
-                    onPressed: () {
-                      Get.toNamed('/chatPage');
-                    }),
-              ),
-            ],
-            bottom: TabBar(
-              indicatorColor: MyColors.primaryColor,
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.grey[400],
-              isScrollable: true,
-              tabs: List<Widget>.generate(_con.status.length, (index) {
-                return Tab(
-                  child: Text(
-                    _con.status[index] == 'PAGADO'
-                        ? 'PENDIENTES'
-                        : _con.status[index] == 'DESPACHADO'
-                            ? 'PREPARANDO'
-                            : _con.status[index],
-                    style: TextStyle(
-                        fontFamily: 'MontserratRegular', fontSize: 12),
+      child: _con.user.lastname != ""
+          ? Scaffold(
+              key: _con.key,
+              appBar: PreferredSize(
+                preferredSize: Size.fromHeight(100),
+                child: AppBar(
+                  title: Text(
+                    'Mi tienda',
+                    style: TextStyle(color: Colors.red),
                   ),
-                );
-              }),
-            ),
-          ),
-        ),
-        drawer: _drawer(),
-        body: Column(
-          children: [
-            Expanded(
-              flex: 1,
-              child: TabBarView(
-                children: _con.status.map((String status) {
-                  return FutureBuilder(
-                      future: _con.getOrdersByRestaurant(
-                          status, _con.user.lastname!),
-                      builder: (context, AsyncSnapshot<List<Order>> snapshot) {
-                        //  print(status);
-                        if (snapshot.hasData) {
-                          if (snapshot.data?.length != null) {
-                            return ListView.builder(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 20),
-                                itemCount: snapshot.data?.length ?? 0,
-                                itemBuilder: (_, index) {
-                                  return _cardOrder(snapshot.data![index]);
-                                });
-                          } else {
-                            return NoDataWidget(text: 'No hay ordenes');
-                          }
-                        } else {
-                          return NoDataWidget(text: 'No hay ordenes');
-                        }
-                      });
-                }).toList(),
+                  automaticallyImplyLeading: false,
+                  backgroundColor: Colors.white,
+                  actions: [
+                    TextButton(
+                        onPressed: () {
+                          openTelf('0998041037');
+                        },
+                        child: Icon(Icons.phone)),
+                    FadeInDown(
+                      duration: Duration(seconds: 2),
+                      delay: Duration(milliseconds: 600),
+                      child: FloatingActionButton(
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Icon(
+                                  Icons.mail,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              generalActions.chats.length != 0 &&
+                                      generalActions.chats.length <= 0
+                                  ? Obx(() {
+                                      return Align(
+                                        alignment: Alignment.topRight,
+                                        child: chatCountIcon(),
+                                      );
+                                    })
+                                  : Container(),
+                            ],
+                          ),
+                          heroTag: "messageButton",
+                          mini: true,
+                          elevation: 0,
+                          backgroundColor: Color.fromARGB(255, 73, 53, 53),
+                          onPressed: () {
+                            Get.toNamed('/chatPage');
+                          }),
+                    ),
+                  ],
+                  bottom: TabBar(
+                    indicatorColor: MyColors.primaryColor,
+                    labelColor: Colors.black,
+                    unselectedLabelColor: Colors.grey[400],
+                    isScrollable: true,
+                    tabs: List<Widget>.generate(_con.status.length, (index) {
+                      return Tab(
+                        child: Text(
+                          _con.status[index] == 'PAGADO'
+                              ? 'PENDIENTES'
+                              : _con.status[index] == 'DESPACHADO'
+                                  ? 'PREPARANDO'
+                                  : _con.status[index],
+                          style: TextStyle(
+                              fontFamily: 'MontserratRegular', fontSize: 12),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+              drawer: _drawer(),
+              body: Column(
+                children: [
+                  _con.user.lastname != ""
+                      ? Expanded(
+                          flex: 1,
+                          child: TabBarView(
+                            children: _con.status.map((String status) {
+                              return FutureBuilder(
+                                  future: _con.getOrdersByRestaurant(
+                                      status, _con.user.lastname!),
+                                  builder: (context,
+                                      AsyncSnapshot<List<Order>> snapshot) {
+                                    //  print(status);
+                                    if (snapshot.hasData) {
+                                      if (snapshot.data?.length != null) {
+                                        return ListView.builder(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 20),
+                                            itemCount:
+                                                snapshot.data?.length ?? 0,
+                                            itemBuilder: (_, index) {
+                                              return _cardOrder(
+                                                  snapshot.data![index]);
+                                            });
+                                      } else {
+                                        return NoDataWidget(
+                                            text: 'No hay ordenes');
+                                      }
+                                    } else {
+                                      return NoDataWidget(
+                                          text: 'No hay ordenes');
+                                    }
+                                  });
+                            }).toList(),
+                          ),
+                        )
+                      : Container(),
+                  Expanded(
+                      flex: 1,
+                      child: Container(
+                        height: MediaQuery.of(context).size.height * 0.2,
+                        width: double.infinity,
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _con.generalActions.restaurants.length,
+                            itemBuilder: (_, index) {
+                              return _con.user.caja ==
+                                      _con.generalActions.restaurants[index].id
+                                  ? FadeInRight(
+                                      delay: Duration(milliseconds: 100),
+                                      child: CardsView(
+                                          product: _con.generalActions
+                                              .restaurants[index]),
+                                    )
+                                  : Container();
+                            }),
+                      ))
+                ],
+              ),
+            )
+          : Scaffold(
+              appBar: AppBar(
+                title: Text(_con.user.name ?? ""),
+                actions: [
+                  FloatingActionButton.extended(
+                      backgroundColor: Colors.black,
+                      label: Text('1'),
+                      icon: Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                      ),
+                      onPressed: () {}),
+                ],
+              ),
+              body: Column(
+                children: [
+                  Expanded(
+                      child: CircleAvatar(
+                    radius: 60,
+                    child: Image.asset('assets/urban/logofly.png'),
+                  ))
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 

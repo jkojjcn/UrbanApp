@@ -49,7 +49,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
             preferredSize: Size.fromHeight(265),
             child: AppBar(
               automaticallyImplyLeading: false,
-              //  backgroundColor: Colors.black,
+              backgroundColor: Color.fromARGB(255, 0, 0, 0),
               flexibleSpace: Column(
                 children: [
                   Stack(
@@ -63,49 +63,23 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                             width: MediaQuery.of(context).size.width * 1,
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(50)),
-                            child: FadeInImage(
-                              image:
-                                  NetworkImage(widget.restaurant?.image3 ?? ''),
-                              fit: BoxFit.fill,
-                              fadeInDuration: Duration(milliseconds: 50),
-                              placeholder:
-                                  AssetImage('assets/img/no-image.png'),
-                            ),
+                            child: widget.restaurant?.image3 != null
+                                ? FadeInImage(
+                                    image: widget.restaurant?.image3 != null
+                                        ? NetworkImage(
+                                            widget.restaurant?.image3 ?? '')
+                                        : AssetImage(
+                                                'assets/iconApp/logoTransparent.png')
+                                            as ImageProvider,
+                                    fit: BoxFit.fill,
+                                    fadeInDuration: Duration(milliseconds: 50),
+                                    placeholder:
+                                        AssetImage('assets/img/no-image.png'),
+                                  )
+                                : Container(),
                           ),
                         ),
                       ),
-                      Positioned(
-                        right: 15,
-                        top: 25,
-                        child: GestureDetector(
-                          onTap: () {
-                            _con.goToOrderCreatePage(widget.restaurant!);
-                          },
-                          child: Container(
-                            height: 30,
-                            width: 30,
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: Colors.white),
-                            margin: EdgeInsets.only(left: 25, top: 13),
-                            child: Icon(
-                              Icons.shopping_cart_outlined,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                          right: 18,
-                          top: 38,
-                          child: Container(
-                            width: 9,
-                            height: 9,
-                            decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(30))),
-                          )),
                       widget.panelState!
                           ? FadeIn(
                               child: Hero(
@@ -132,6 +106,26 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                               ),
                             ))
                           : Container(),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            _con.goToOrderCreatePage(widget.restaurant!);
+                          },
+                          child: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white),
+                            margin: EdgeInsets.only(left: 25, top: 13),
+                            child: Icon(
+                              Icons.shopping_cart_outlined,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
                       Positioned(
                           top: 140,
                           left: 10,
@@ -165,14 +159,14 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
               bottom: TabBar(
                 indicatorColor: MyColors.primaryColor,
                 labelColor: Colors.deepOrange,
-                unselectedLabelColor: Colors.grey[200],
+                unselectedLabelColor: Color.fromARGB(255, 177, 177, 177),
                 isScrollable: true,
                 tabs: List<Widget>.generate(_con.categories.length, (index) {
                   return FadeIn(
                     child: Tab(
                       child: Text(
                         _con.categories[index].name ?? '',
-                        style: TextStyle(fontSize: 13),
+                        style: TextStyle(fontSize: 15),
                       ),
                     ),
                   );
@@ -180,7 +174,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
               ),
             ),
           ),
-          backgroundColor: Color.fromARGB(255, 7, 7, 7),
+          backgroundColor: Color.fromARGB(255, 31, 31, 31),
           // drawer: _drawer(),
           body: TabBarView(
             children: _con.categories.map((Category category) {
@@ -196,11 +190,13 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
                           from: 20,
                           child: GridView.builder(
                               padding: EdgeInsets.symmetric(
-                                  horizontal: 2, vertical: 1),
+                                  horizontal: 10, vertical: 5),
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
+                                      mainAxisSpacing: 10,
+                                      crossAxisSpacing: 10,
                                       crossAxisCount: 2,
-                                      childAspectRatio: 0.98),
+                                      childAspectRatio: 1),
                               itemCount: snapshot.data?.length ?? 0,
                               itemBuilder: (_, index) {
                                 return _cardProduct(snapshot.data![index]);
@@ -232,7 +228,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
       child: Container(
         height: 200,
         child: Card(
-          color: Color.fromARGB(255, 39, 39, 39),
+          color: Color.fromARGB(255, 68, 68, 68),
           //  elevation: 5.0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           child: Stack(
@@ -240,7 +236,7 @@ class _ClientProductsListPageState extends State<ClientProductsListPage> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(15.0),
                 child: Container(
-                  height: 150,
+                  height: 130,
                   width: double.infinity,
                   decoration:
                       BoxDecoration(borderRadius: BorderRadius.circular(27)),

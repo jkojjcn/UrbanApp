@@ -33,7 +33,7 @@ class DeliveryOrdersDetailPage extends StatefulWidget {
 
 class _DeliveryOrdersDetailPageState extends State<DeliveryOrdersDetailPage> {
   DeliveryOrdersDetailController _con = new DeliveryOrdersDetailController();
-  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
+  String urlRushImage = "https://i.ibb.co/55h301K/logo-White-Background.png";
 
   @override
   void initState() {

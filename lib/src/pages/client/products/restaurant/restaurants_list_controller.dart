@@ -37,7 +37,7 @@ class RestaurantsListController {
 
   User user = User.fromJson(GetStorage().read('user'));
   Address currentAddress =
-      Address.fromJson(jsonDecode(GetStorage().read('currentAddress')));
+      Address.fromJson(jsonDecode(GetStorage().read('currentAddress')) ?? {});
 
   RestaurantsProvider _restaurantsProvider = new RestaurantsProvider();
   PublicationsProvider _publicationsProvider = new PublicationsProvider();

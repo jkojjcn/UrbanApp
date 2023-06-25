@@ -17,7 +17,7 @@ class _ChatsPageState extends State<ChatsPage> {
   ChatsController con = Get.put(ChatsController());
   GeneralActions generalActions = Get.find();
 
-  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
+  String urlRushImage = "https://i.ibb.co/55h301K/logo-White-Background.png";
 
   @override
   Widget build(BuildContext context) {

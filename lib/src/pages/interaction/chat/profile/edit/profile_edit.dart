@@ -121,7 +121,9 @@ class ProfileEditPage extends StatelessWidget {
               ? FileImage(con.imageFile!)
               : con.user.image != null
                   ? NetworkImage(con.user.image!)
-                  : AssetImage('assets/iconApp/fly.png') as ImageProvider,
+                  : AssetImage(
+                      'assets/urban/logoWhiteBackground.png',
+                    ) as ImageProvider,
           radius: 60,
           backgroundColor: Colors.grey[200],
         ),

@@ -41,7 +41,7 @@ class _ClientOrdersMapPageState extends State<ClientOrdersMapPage> {
     _con.dispose();
   }
 
-  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
+  String urlRushImage = "https://i.ibb.co/55h301K/logo-White-Background.png";
 
   @override
   Widget build(BuildContext context) {

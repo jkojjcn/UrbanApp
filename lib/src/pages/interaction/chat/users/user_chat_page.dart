@@ -44,13 +44,14 @@ class UserChatPage extends StatelessWidget {
           child: user?.image != '' && user?.image != 'null'
               ? FadeInImage.assetNetwork(
                   fit: BoxFit.cover,
-                  placeholder: 'assets/iconApp/fly.png',
-                  image: user?.image ?? '',
+                  placeholder: 'assets/urban/logoWhiteBackground.png',
+                  image: user?.image ??
+                      'https://i.ibb.co/55h301K/logo-White-Background.png',
                 )
               : FadeInImage.assetNetwork(
                   fit: BoxFit.cover,
-                  placeholder: 'assets/iconApp/fly.png',
-                  image: 'https://i.ibb.co/7V3mqx4/logoIOS.png',
+                  placeholder: 'assets/urban/logoWhiteBackground.png',
+                  image: 'https://i.ibb.co/55h301K/logo-White-Background.png',
                 ),
         ),
       ),

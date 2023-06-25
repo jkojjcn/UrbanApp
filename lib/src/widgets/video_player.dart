@@ -76,7 +76,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                         Colors.transparent,
                         Colors.transparent,
                         Colors.transparent,
-                        Colors.black.withOpacity(0.4),
+                        Colors.transparent,
                       ])),
                   height: MediaQuery.of(context).size.height * 1,
                   width: MediaQuery.of(context).size.width * 1,
@@ -122,7 +122,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                           padding: const EdgeInsets.all(8.0),
                           child: CircleAvatar(
                             backgroundColor: Colors.black,
-                            radius: MediaQuery.of(context).size.width * 0.10,
+                            radius: 20,
                             backgroundImage:
                                 NetworkImage(widget.restaurant!.image3!),
                           ),
@@ -139,7 +139,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                                   softWrap: false,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      color: Color.fromARGB(255, 204, 204, 204),
+                                      color: Color.fromARGB(255, 255, 255, 255),
                                       fontFamily: 'MontserratSemiBold',
                                       fontSize: 14),
                                 ),
@@ -155,7 +155,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                                   textAlign: TextAlign.left,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      color: Color.fromARGB(255, 204, 204, 204),
+                                      color: Color.fromARGB(255, 231, 231, 231),
                                       fontFamily: 'MontserratRegular',
                                       fontSize: 12),
                                 ),

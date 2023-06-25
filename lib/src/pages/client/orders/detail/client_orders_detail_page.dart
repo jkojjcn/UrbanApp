@@ -27,7 +27,7 @@ class ClientOrdersDetailPage extends StatefulWidget {
 
 class _ClientOrdersDetailPageState extends State<ClientOrdersDetailPage> {
   ClientOrdersDetailController _con = new ClientOrdersDetailController();
-  String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
+  String urlRushImage = "https://i.ibb.co/55h301K/logo-White-Background.png";
 
   @override
   void initState() {

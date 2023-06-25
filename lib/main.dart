@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:jcn_delivery/src/models/address.dart';
 import 'package:jcn_delivery/src/models/user.dart';
 import 'package:jcn_delivery/src/pages/client/address/create/client_address_create_page.dart';
 import 'package:jcn_delivery/src/pages/client/address/list/client_address_list_page.dart';
@@ -91,6 +93,15 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    String? id;
+    try {
+      Address currentAddress =
+          Address.fromJson(jsonDecode(GetStorage().read('currentAddress')));
+      id = currentAddress.id;
+    } catch (e) {
+      log(e.toString());
+    }
+
     return GetMaterialApp(
       title: 'RUSH',
       debugShowCheckedModeBanner: false,
@@ -98,7 +109,9 @@ class _MyAppState extends State<MyApp> {
       initialRoute: user.id != null
           ? user.roles!.length > 1
               ? '/roles'
-              : '/client/restaurants'
+              : id != null && id != ''
+                  ? '/client/restaurants'
+                  : '/client/address/list'
           : '/login',
       getPages: [
         GetPage(name: '/centralChat', page: () => ChatsPage()),

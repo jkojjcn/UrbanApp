@@ -44,8 +44,8 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.jcndev.delivery.app"
         minSdkVersion 26
-        targetSdkVersion 30
-        versionCode 27
+        targetSdkVersion 31
+        versionCode 29
         versionName "1.0.0"
         multiDexEnabled true
     }

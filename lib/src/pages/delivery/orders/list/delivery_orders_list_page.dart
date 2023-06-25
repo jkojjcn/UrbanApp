@@ -35,7 +35,8 @@ class _DeliveryOrdersListPageState extends State<DeliveryOrdersListPage>
     });
   }
 
-  final String urlRushImage = "https://i.ibb.co/7V3mqx4/logoIOS.png";
+  final String urlRushImage =
+      "https://i.ibb.co/55h301K/logo-White-Background.png";
 
   @override
   Widget build(BuildContext context) {

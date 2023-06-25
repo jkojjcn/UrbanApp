@@ -193,8 +193,11 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
                                       .content![index].content?.length ??
                                   0,
                               itemBuilder: (context, saborIndex) {
-                                return _featuresCard(widget.product.features!
-                                    .content![index].content![saborIndex]);
+                                return _featuresCard(
+                                    widget.product.features!.content![index]
+                                        .content![saborIndex],
+                                    widget.product.features!.content![index]
+                                        .max!);
                               }),
                         )
                       : Container()
@@ -203,7 +206,7 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
             }));
   }
 
-  Widget _featuresCard(Sabores sabores) {
+  Widget _featuresCard(Sabores sabores, int max) {
     return Container(
         height: 60,
         color:
@@ -213,19 +216,23 @@ class _ClientProductsDetailPageState extends State<ClientProductsDetailPage> {
                 : Color.fromARGB(255, 139, 139, 139),
         child: Center(
           child: CheckboxListTile(
+            activeColor: Colors.deepOrange,
             value: _con.valores
                         .contains('${sabores.name} + ${sabores.description}') !=
                     true
                 ? false
                 : true,
             onChanged: (value) {
-              sabores.addInProduct = value;
-
               if (value == true) {
-                _con.valores.add('${sabores.name} + ${sabores.description}');
+                sabores.addInProduct = value;
+                if (_con.valores.length <= (max - 1)) {
+                  _con.valores.add('${sabores.name} + ${sabores.description}');
+                }
               } else {
+                sabores.addInProduct = value;
                 _con.valores.remove('${sabores.name} + ${sabores.description}');
               }
+
               refresh();
             },
             title: Text(
